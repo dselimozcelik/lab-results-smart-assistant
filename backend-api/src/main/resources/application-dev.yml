@@ -22,3 +22,13 @@ management:
   endpoint:
     health:
       show-details: always
+
+lab:
+  polling:
+    mock-base-url: http://localhost:8081
+    fixed-delay-ms: 10000
+    # Leave blank for normal operation: the mock streams a varied, realistic random batch.
+    # To force a case for a demo, set one of:
+    #   normal | abnormal | critical | duplicate | missing-field | invalid-unit | stale | device-error
+    # (e.g. run with --lab.polling.scenario=invalid-unit)
+    scenario:
