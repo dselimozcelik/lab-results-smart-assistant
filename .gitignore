@@ -1,8 +1,10 @@
 # AI assistant / internal notes — not part of the deliverable
 .claude/
 CLAUDE.md
+AGENTS.md
 DECISIONS.md
 PROGRESS_LOG.md
+learning-notes/
 
 # Java / Maven
 target/
