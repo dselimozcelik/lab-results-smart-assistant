@@ -1,0 +1,16 @@
+# AI assistant / internal notes — not part of the deliverable
+.claude/
+CLAUDE.md
+DECISIONS.md
+PROGRESS_LOG.md
+
+# Java / Maven
+target/
+
+# Node / frontend
+node_modules/
+dist/
+
+# Env & logs
+.env
+*.log

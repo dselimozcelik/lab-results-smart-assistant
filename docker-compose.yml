@@ -1,0 +1,21 @@
+# Dev: only PostgreSQL runs in Docker. The three apps run locally for fast reload.
+services:
+  postgres:
+    image: postgres:16
+    container_name: labresults-postgres
+    environment:
+      POSTGRES_DB: labresults
+      POSTGRES_USER: labresults
+      POSTGRES_PASSWORD: labresults
+    ports:
+      - "5432:5432"
+    volumes:
+      - labresults-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U labresults"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  labresults-pgdata:
