@@ -1,0 +1,97 @@
+package com.hospital.backend.ai;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hospital.backend.ai.OllamaDtos.ModelContent;
+import com.hospital.backend.labresult.LabResult;
+import com.hospital.backend.labresult.LabResultRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+// Orchestrates one AI analysis: cache lookup -> deterministic summary -> prompt -> Ollama
+// -> parse JSON -> attach the backend-enforced disclaimer -> persist. Cached by
+// (labResultId, model, promptVersion) so a repeat request never re-calls the LLM.
+@Service
+public class AiAnalysisService {
+
+    private static final Logger log = LoggerFactory.getLogger(AiAnalysisService.class);
+
+    // The disclaimer is enforced by the backend, NOT produced by the model (CLAUDE.md §7).
+    private static final String DISCLAIMER =
+            "This is a preliminary, AI-assisted analysis to support a doctor. "
+            + "It is not a diagnosis and must be reviewed by a qualified clinician.";
+
+    private final LabResultRepository labResultRepository;
+    private final AiAnalysisRepository aiAnalysisRepository;
+    private final AnomalySummaryBuilder summaryBuilder;
+    private final PromptTemplate promptTemplate;
+    private final OllamaClient ollamaClient;
+    private final OllamaProperties props;
+    private final ObjectMapper objectMapper;
+
+    public AiAnalysisService(LabResultRepository labResultRepository,
+                             AiAnalysisRepository aiAnalysisRepository,
+                             AnomalySummaryBuilder summaryBuilder,
+                             PromptTemplate promptTemplate,
+                             OllamaClient ollamaClient,
+                             OllamaProperties props,
+                             ObjectMapper objectMapper) {
+        this.labResultRepository = labResultRepository;
+        this.aiAnalysisRepository = aiAnalysisRepository;
+        this.summaryBuilder = summaryBuilder;
+        this.promptTemplate = promptTemplate;
+        this.ollamaClient = ollamaClient;
+        this.props = props;
+        this.objectMapper = objectMapper;
+    }
+
+    public AiAnalysis analyze(Long labResultId) {
+        LabResult result = labResultRepository.findById(labResultId)
+                .orElseThrow(() -> new EntityNotFoundException("Lab result not found: " + labResultId));
+
+        // Cache hit: same result + model + prompt version already analysed.
+        return aiAnalysisRepository
+                .findByLabResultIdAndModelAndPromptVersion(labResultId, props.model(), PromptTemplate.VERSION)
+                .orElseGet(() -> generateAndSave(result));
+    }
+
+    private AiAnalysis generateAndSave(LabResult result) {
+        String prompt = promptTemplate.render(summaryBuilder.build(result));
+
+        String rawJson = ollamaClient.generate(prompt);
+        if (rawJson == null || rawJson.isBlank()) {
+            throw new AiAnalysisException("Empty response from the language model", null);
+        }
+
+        ModelContent content = parse(rawJson);
+
+        AiAnalysis analysis = new AiAnalysis(
+                result.getId(), props.model(), PromptTemplate.VERSION,
+                content.summary(),
+                writeJson(content.flaggedTests()),
+                writeJson(content.suggestedFollowups()),
+                DISCLAIMER);
+        return aiAnalysisRepository.save(analysis);
+    }
+
+    private ModelContent parse(String rawJson) {
+        try {
+            return objectMapper.readValue(rawJson, ModelContent.class);
+        } catch (JsonProcessingException e) {
+            log.warn("Could not parse model output as JSON: {}", rawJson);
+            throw new AiAnalysisException("Language model returned malformed output", e);
+        }
+    }
+
+    private String writeJson(List<String> list) {
+        try {
+            return objectMapper.writeValueAsString(list == null ? List.of() : list);
+        } catch (JsonProcessingException e) {
+            throw new AiAnalysisException("Could not serialise model list field", e);
+        }
+    }
+}

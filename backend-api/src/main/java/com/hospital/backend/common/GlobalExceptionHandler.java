@@ -1,5 +1,7 @@
 package com.hospital.backend.common;
 
+import com.hospital.backend.ai.AiAnalysisException;
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -34,6 +36,23 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining("; "));
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detail);
         pd.setTitle("Validation failed");
+        return pd;
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ProblemDetail handleNotFound(EntityNotFoundException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        pd.setTitle("Not found");
+        return pd;
+    }
+
+    @ExceptionHandler(AiAnalysisException.class)
+    public ProblemDetail handleAiAnalysis(AiAnalysisException ex) {
+        // The LLM is local and best-effort; a failure shouldn't read as a server bug.
+        log.warn("AI analysis failed: {}", ex.getMessage());
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(
+                HttpStatus.SERVICE_UNAVAILABLE, "AI analysis is temporarily unavailable");
+        pd.setTitle("AI analysis unavailable");
         return pd;
     }
 

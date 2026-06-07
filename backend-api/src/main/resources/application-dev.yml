@@ -40,3 +40,11 @@ lab:
     #   normal | abnormal | critical | duplicate | missing-field | invalid-unit | stale | device-error
     # (e.g. run with --lab.polling.scenario=invalid-unit)
     scenario:
+  ollama:
+    # Local LLM runs on the host (privacy: patient data never leaves the machine).
+    base-url: http://localhost:11434
+    # Small instruct model; plenty for summarising a few values into structured JSON on an M1.
+    # Swap for a stronger local model in production without touching code.
+    model: llama3.2:3b
+    # Cap the wait so a slow/hung LLM never blocks the request indefinitely.
+    timeout: 30s
