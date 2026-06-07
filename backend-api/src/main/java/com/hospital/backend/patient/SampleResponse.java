@@ -31,8 +31,9 @@ public record SampleResponse(
 
     private static int severity(AnomalyStatus status) {
         return switch (status) {
-            case CRITICAL -> 4;
-            case HIGH, LOW -> 3;
+            case CRITICAL -> 5;
+            case HIGH -> 4;
+            case LOW -> 3;
             case INVALID -> 2;
             case NORMAL -> 1;
         };

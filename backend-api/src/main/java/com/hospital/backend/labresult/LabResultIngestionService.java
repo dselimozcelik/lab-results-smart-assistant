@@ -1,7 +1,6 @@
 package com.hospital.backend.labresult;
 
-import com.hospital.backend.audit.PollingAuditLog;
-import com.hospital.backend.audit.PollingAuditLogRepository;
+import com.hospital.backend.audit.PollingAuditService;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.slf4j.Logger;
@@ -10,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -28,25 +28,26 @@ public class LabResultIngestionService {
     private final TestResultValidator testValidator;
     private final Validator beanValidator;
     private final AnomalyClassifier anomalyClassifier;
-    private final PollingAuditLogRepository auditLogRepository;
+    private final PollingAuditService auditService;
 
     public LabResultIngestionService(SampleRepository sampleRepository,
                                      SampleValidator sampleValidator,
                                      TestResultValidator testValidator,
                                      Validator beanValidator,
                                      AnomalyClassifier anomalyClassifier,
-                                     PollingAuditLogRepository auditLogRepository) {
+                                     PollingAuditService auditService) {
         this.sampleRepository = sampleRepository;
         this.sampleValidator = sampleValidator;
         this.testValidator = testValidator;
         this.beanValidator = beanValidator;
         this.anomalyClassifier = anomalyClassifier;
-        this.auditLogRepository = auditLogRepository;
+        this.auditService = auditService;
     }
 
     @Transactional
     public void ingest(List<SampleBatchDto> batch) {
         int validTests = 0, invalidTests = 0, duplicateTubes = 0;
+        List<String> auditEvents = new ArrayList<>();
 
         // sampleIds already accepted in THIS batch, so a repeat tube inside one batch is caught
         // before it can hit the DB unique constraint.
@@ -57,17 +58,20 @@ public class LabResultIngestionService {
             if (structural.isPresent()) {
                 invalidTests += tube.tests() == null ? 0 : tube.tests().size();
                 log.warn("Invalid tube [{}]: {}", tube.sampleId(), structural.get());
+                auditEvents.add("Invalid tube " + tube.sampleId() + ": " + structural.get());
                 continue;
             }
             Optional<String> tubeViolation = sampleValidator.findViolation(tube);
             if (tubeViolation.isPresent()) {
                 invalidTests += tube.tests().size();
                 log.warn("Rejected tube [{}]: {}", tube.sampleId(), tubeViolation.get());
+                auditEvents.add("Rejected tube " + tube.sampleId() + ": " + tubeViolation.get());
                 continue;
             }
             if (seenInBatch.contains(tube.sampleId()) || sampleRepository.existsBySampleId(tube.sampleId())) {
                 duplicateTubes++;
                 log.info("Duplicate tube skipped [{}]", tube.sampleId());
+                auditEvents.add("Duplicate tube " + tube.sampleId());
                 continue;
             }
 
@@ -79,6 +83,7 @@ public class LabResultIngestionService {
                 if (!seenTestCodes.add(test.testCode())) {
                     invalidTests++;
                     log.info("Duplicate test in tube [{}]: {}", tube.sampleId(), test.testCode());
+                    auditEvents.add("Duplicate test " + tube.sampleId() + "/" + test.testCode());
                     continue;
                 }
                 Optional<String> testViolation = testValidator.findViolation(test);
@@ -87,6 +92,8 @@ public class LabResultIngestionService {
                     status = AnomalyStatus.INVALID;
                     invalidTests++;
                     log.warn("Invalid test [{}/{}]: {}", tube.sampleId(), test.testCode(), testViolation.get());
+                    auditEvents.add("Invalid test " + tube.sampleId() + "/" + test.testCode()
+                            + ": " + testViolation.get());
                 } else {
                     status = anomalyClassifier.classify(test.value(), test.referenceMin(), test.referenceMax());
                     validTests++;
@@ -102,8 +109,7 @@ public class LabResultIngestionService {
         log.info("Ingest cycle: tubes={} validTests={} invalidTests={} duplicateTubes={}",
                 batch.size(), validTests, invalidTests, duplicateTubes);
 
-        auditLogRepository.save(
-                new PollingAuditLog(batch.size(), validTests, invalidTests, duplicateTubes, null));
+        auditService.recordProcessed(batch.size(), validTests, invalidTests, duplicateTubes, auditEvents);
     }
 
     private Optional<String> structuralViolation(SampleBatchDto tube) {

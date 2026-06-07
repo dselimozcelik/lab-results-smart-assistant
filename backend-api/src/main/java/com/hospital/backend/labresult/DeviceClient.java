@@ -34,6 +34,6 @@ public class DeviceClient {
                 })
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<SampleBatchDto>>() {})
-                .block();
+                .block(props.timeout());
     }
 }

@@ -1,7 +1,6 @@
 package com.hospital.backend.labresult;
 
-import com.hospital.backend.audit.PollingAuditLog;
-import com.hospital.backend.audit.PollingAuditLogRepository;
+import com.hospital.backend.audit.PollingAuditService;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
@@ -25,19 +24,19 @@ import static org.mockito.Mockito.when;
 class LabResultIngestionServiceTest {
 
     private SampleRepository sampleRepository;
-    private PollingAuditLogRepository auditLogRepository;
+    private PollingAuditService auditService;
     private ValidatorFactory validatorFactory;
     private LabResultIngestionService service;
 
     @BeforeEach
     void setUp() {
         sampleRepository = mock(SampleRepository.class);
-        auditLogRepository = mock(PollingAuditLogRepository.class);
+        auditService = mock(PollingAuditService.class);
         validatorFactory = Validation.buildDefaultValidatorFactory();
         Validator beanValidator = validatorFactory.getValidator();
         AnomalyClassifier classifier = new AnomalyClassifier(new AnomalyProperties(0.5));
         service = new LabResultIngestionService(sampleRepository, new SampleValidator(),
-                new TestResultValidator(), beanValidator, classifier, auditLogRepository);
+                new TestResultValidator(), beanValidator, classifier, auditService);
         // No tube has been seen before unless a test says otherwise.
         when(sampleRepository.existsBySampleId(anyString())).thenReturn(false);
     }
@@ -111,12 +110,11 @@ class LabResultIngestionServiceTest {
     }
 
     private void assertAuditCounts(int fetched, int valid, int invalid, int duplicate) {
-        ArgumentCaptor<PollingAuditLog> audit = ArgumentCaptor.forClass(PollingAuditLog.class);
-        verify(auditLogRepository).save(audit.capture());
-        PollingAuditLog log = audit.getValue();
-        assertThat(log.getFetchedCount()).isEqualTo(fetched);
-        assertThat(log.getValidCount()).isEqualTo(valid);
-        assertThat(log.getInvalidCount()).isEqualTo(invalid);
-        assertThat(log.getDuplicateCount()).isEqualTo(duplicate);
+        verify(auditService).recordProcessed(
+                org.mockito.ArgumentMatchers.eq(fetched),
+                org.mockito.ArgumentMatchers.eq(valid),
+                org.mockito.ArgumentMatchers.eq(invalid),
+                org.mockito.ArgumentMatchers.eq(duplicate),
+                any());
     }
 }
