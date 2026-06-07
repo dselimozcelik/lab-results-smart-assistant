@@ -25,7 +25,7 @@ public class LabResultPoller {
     @Scheduled(fixedDelayString = "${lab.polling.fixed-delay-ms}")
     public void poll() {
         try {
-            List<DeviceResultDto> batch = deviceClient.fetchBatch();
+            List<SampleBatchDto> batch = deviceClient.fetchBatch();
             if (batch == null || batch.isEmpty()) {
                 return;
             }

@@ -19,7 +19,7 @@ public class DeviceClient {
         this.props = props;
     }
 
-    public List<DeviceResultDto> fetchBatch() {
+    public List<SampleBatchDto> fetchBatch() {
         // Blank scenario => normal operation (mock returns a varied random batch).
         // A set scenario forces that case, for demos.
         String scenario = props.scenario();
@@ -33,7 +33,7 @@ public class DeviceClient {
                     return uri.build();
                 })
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<List<DeviceResultDto>>() {})
+                .bodyToMono(new ParameterizedTypeReference<List<SampleBatchDto>>() {})
                 .block();
     }
 }

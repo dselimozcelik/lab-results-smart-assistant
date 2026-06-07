@@ -7,11 +7,15 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
 
-// Persisted, validated lab measurement. Maps 1:1 to the lab_result table (Flyway-owned).
+// One test within a tube. Belongs to a Sample (the tube). Maps 1:1 to the lab_result table.
+// value and reference bounds are nullable: a test the device reported but that is unusable is
+// stored with anomalyStatus = INVALID rather than dropped, so it stays visible to the doctor.
 @Entity
 @Table(name = "lab_result")
 public class LabResult {
@@ -20,11 +24,9 @@ public class LabResult {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "sample_id", nullable = false, unique = true)
-    private String sampleId;
-
-    @Column(name = "patient_id", nullable = false)
-    private String patientId;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "sample_fk", nullable = false)
+    private Sample sample;
 
     @Column(name = "test_code", nullable = false)
     private String testCode;
@@ -32,23 +34,17 @@ public class LabResult {
     @Column(name = "test_name", nullable = false)
     private String testName;
 
-    @Column(nullable = false)
+    @Column
     private Double value;
 
     @Column(nullable = false)
     private String unit;
 
-    @Column(name = "reference_min", nullable = false)
+    @Column(name = "reference_min")
     private Double referenceMin;
 
-    @Column(name = "reference_max", nullable = false)
+    @Column(name = "reference_max")
     private Double referenceMax;
-
-    @Column(name = "measured_at", nullable = false)
-    private Instant measuredAt;
-
-    @Column(name = "device_id", nullable = false)
-    private String deviceId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "anomaly_status", nullable = false)
@@ -61,32 +57,27 @@ public class LabResult {
         // JPA
     }
 
-    public LabResult(String sampleId, String patientId, String testCode, String testName,
-                     Double value, String unit, Double referenceMin, Double referenceMax,
-                     Instant measuredAt, String deviceId, AnomalyStatus anomalyStatus) {
-        this.sampleId = sampleId;
-        this.patientId = patientId;
+    public LabResult(String testCode, String testName, Double value, String unit,
+                     Double referenceMin, Double referenceMax, AnomalyStatus anomalyStatus) {
         this.testCode = testCode;
         this.testName = testName;
         this.value = value;
         this.unit = unit;
         this.referenceMin = referenceMin;
         this.referenceMax = referenceMax;
-        this.measuredAt = measuredAt;
-        this.deviceId = deviceId;
         this.anomalyStatus = anomalyStatus;
+    }
+
+    void setSample(Sample sample) {
+        this.sample = sample;
     }
 
     public Long getId() {
         return id;
     }
 
-    public String getSampleId() {
-        return sampleId;
-    }
-
-    public String getPatientId() {
-        return patientId;
+    public Sample getSample() {
+        return sample;
     }
 
     public String getTestCode() {
@@ -111,14 +102,6 @@ public class LabResult {
 
     public Double getReferenceMax() {
         return referenceMax;
-    }
-
-    public Instant getMeasuredAt() {
-        return measuredAt;
-    }
-
-    public String getDeviceId() {
-        return deviceId;
     }
 
     public AnomalyStatus getAnomalyStatus() {

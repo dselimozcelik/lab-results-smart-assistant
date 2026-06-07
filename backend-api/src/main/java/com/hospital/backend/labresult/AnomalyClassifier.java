@@ -14,6 +14,15 @@ public class AnomalyClassifier {
         this.criticalFactor = props.criticalFactor();
     }
 
+    // Null-safe entry point: a test with a missing value or missing bounds is INVALID, not an
+    // error. Otherwise delegates to the primitive classification below.
+    public AnomalyStatus classify(Double value, Double referenceMin, Double referenceMax) {
+        if (value == null || referenceMin == null || referenceMax == null) {
+            return AnomalyStatus.INVALID;
+        }
+        return classify(value.doubleValue(), referenceMin.doubleValue(), referenceMax.doubleValue());
+    }
+
     public AnomalyStatus classify(double value, double referenceMin, double referenceMax) {
         if (referenceMin > referenceMax) {
             return AnomalyStatus.INVALID;
