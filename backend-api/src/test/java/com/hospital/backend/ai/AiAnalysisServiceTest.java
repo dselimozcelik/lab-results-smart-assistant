@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -119,5 +120,47 @@ class AiAnalysisServiceTest {
         assertThat(result).isSameAs(cached);
         assertThat(ollamaServer.getRequestCount()).isZero(); // no LLM call
         verify(aiAnalysisRepository, never()).save(any());
+    }
+
+    @Test
+    void flaggedTestsComeFromBackendStatusesNotModelClaims() throws Exception {
+        when(sampleRepository.findBySampleId("S-100")).thenReturn(Optional.of(sampleWithPanel()));
+        String modelJson = "{\"summary\":\"Panel reviewed.\","
+                + "\"flaggedTests\":[\"Invented Test\"],"
+                + "\"suggestedFollowups\":[\"  Repeat panel.  \",\"Repeat panel.\",\"\"]}";
+        String envelope = "{\"response\":" + new ObjectMapper().writeValueAsString(modelJson) + "}";
+        ollamaServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(envelope));
+
+        AiAnalysis result = service.analyze("S-100");
+
+        assertThat(result.getFlaggedTests())
+                .contains("White Blood Cell Count")
+                .contains("Potassium")
+                .doesNotContain("Invented Test");
+        assertThat(result.getSuggestedFollowups()).isEqualTo("[\"Repeat panel.\"]");
+    }
+
+    @Test
+    void emptySummaryIsRejected() throws Exception {
+        when(sampleRepository.findBySampleId("S-100")).thenReturn(Optional.of(sampleWithPanel()));
+        String modelJson = "{\"summary\":\" \",\"flaggedTests\":[],\"suggestedFollowups\":[]}";
+        String envelope = "{\"response\":" + new ObjectMapper().writeValueAsString(modelJson) + "}";
+        ollamaServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(envelope));
+
+        assertThatThrownBy(() -> service.analyze("S-100"))
+                .isInstanceOf(AiAnalysisException.class)
+                .hasMessageContaining("empty summary");
+        verify(aiAnalysisRepository, never()).save(any());
+    }
+
+    @Test
+    void malformedModelJsonIsRejected() throws Exception {
+        when(sampleRepository.findBySampleId("S-100")).thenReturn(Optional.of(sampleWithPanel()));
+        String envelope = "{\"response\":" + new ObjectMapper().writeValueAsString("not-json") + "}";
+        ollamaServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(envelope));
+
+        assertThatThrownBy(() -> service.analyze("S-100"))
+                .isInstanceOf(AiAnalysisException.class)
+                .hasMessageContaining("malformed");
     }
 }

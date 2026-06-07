@@ -54,6 +54,7 @@ export function PatientsPage() {
     queryKey: ["patients", query],
     queryFn: () => getPatients(query),
     placeholderData: keepPreviousData,
+    refetchInterval: 10_000,
   });
 
   function changePageSize(next: number) {

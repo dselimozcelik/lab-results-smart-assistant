@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hospital.backend.ai.OllamaDtos.ModelContent;
 import com.hospital.backend.labresult.Sample;
 import com.hospital.backend.labresult.SampleRepository;
+import com.hospital.backend.labresult.AnomalyStatus;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,12 +71,16 @@ public class AiAnalysisService {
             throw new AiAnalysisException("Empty response from the language model", null);
         }
 
-        ModelContent content = parse(rawJson);
+        ModelContent content = validate(parse(rawJson));
+        List<String> flaggedTests = sample.getTests().stream()
+                .filter(test -> test.getAnomalyStatus() != AnomalyStatus.NORMAL)
+                .map(test -> test.getTestName())
+                .toList();
 
         AiAnalysis analysis = new AiAnalysis(
                 sample.getId(), props.model(), PromptTemplate.VERSION,
                 content.summary(),
-                writeJson(content.flaggedTests()),
+                writeJson(flaggedTests),
                 writeJson(content.suggestedFollowups()),
                 DISCLAIMER);
         return aiAnalysisRepository.save(analysis);
@@ -88,6 +93,27 @@ public class AiAnalysisService {
             log.warn("Could not parse model output as JSON: {}", rawJson);
             throw new AiAnalysisException("Language model returned malformed output", e);
         }
+    }
+
+    private ModelContent validate(ModelContent content) {
+        if (content.summary() == null || content.summary().isBlank()) {
+            throw new AiAnalysisException("Language model returned an empty summary", null);
+        }
+        return new ModelContent(
+                content.summary().trim(),
+                List.of(),
+                cleanList(content.suggestedFollowups()));
+    }
+
+    private List<String> cleanList(List<String> values) {
+        if (values == null) {
+            return List.of();
+        }
+        return values.stream()
+                .filter(value -> value != null && !value.isBlank())
+                .map(String::trim)
+                .distinct()
+                .toList();
     }
 
     private String writeJson(List<String> list) {
