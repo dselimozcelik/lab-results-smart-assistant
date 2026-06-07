@@ -35,6 +35,9 @@ public class PatientService {
             Instant from,
             Instant to,
             Pageable pageable) {
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new IllegalArgumentException("from must be before or equal to to");
+        }
         return sampleRepository.findPatientSummaries(
                         optionalText(patientId), optionalText(testCode), status, from, to, pageable)
                 .map(row -> new PatientSummaryResponse(
