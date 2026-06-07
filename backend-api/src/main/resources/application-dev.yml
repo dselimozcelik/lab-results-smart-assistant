@@ -43,8 +43,9 @@ lab:
   ollama:
     # Local LLM runs on the host (privacy: patient data never leaves the machine).
     base-url: http://localhost:11434
-    # Small instruct model; plenty for summarising a few values into structured JSON on an M1.
-    # Swap for a stronger local model in production without touching code.
-    model: llama3.2:3b
+    # Instruct model. qwen2.5:7b handles Turkish output far more reliably than a 3B model and
+    # fits comfortably on a 16GB M1. Swap for any local model without touching code.
+    model: qwen2.5:7b
     # Cap the wait so a slow/hung LLM never blocks the request indefinitely.
-    timeout: 30s
+    # A 7B model is slower per call, so allow a little more headroom.
+    timeout: 60s
