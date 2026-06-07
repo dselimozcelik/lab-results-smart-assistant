@@ -8,9 +8,9 @@ export function RequireAuth() {
   if (!session) {
     const returnTo = `${location.pathname}${location.search}${location.hash}`;
     const params = new URLSearchParams({ from: returnTo });
-    if (sessionEndReason) {
-      params.set("reason", sessionEndReason);
-    }
+    // "expired" = the session ran out mid-use. Otherwise the user reached a protected page with
+    // no in-memory session (a fresh load / refresh / deep link), so explain that gently too.
+    params.set("reason", sessionEndReason ?? "signin");
     return <Navigate to={`/login?${params}`} replace />;
   }
   return <Outlet />;

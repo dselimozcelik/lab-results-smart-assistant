@@ -52,6 +52,12 @@ export function LoginPage() {
           </p>
         )}
 
+        {searchParams.get("reason") === "signin" && requestedPath && requestedPath !== "/" && (
+          <p className="login-notice" role="status">
+            Bu sayfayı görüntülemek için lütfen giriş yapın.
+          </p>
+        )}
+
         <div className="login-field">
           <label htmlFor="username">Kullanıcı adı</label>
           <input
