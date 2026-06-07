@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 @Component
 public class PromptTemplate {
 
-    public static final String VERSION = "v3";
+    public static final String VERSION = "v4";
 
     private final String template;
 

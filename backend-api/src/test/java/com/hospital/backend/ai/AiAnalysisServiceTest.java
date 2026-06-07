@@ -102,7 +102,7 @@ class AiAnalysisServiceTest {
 
         // The disclaimer is set by the backend, not taken from the model output.
         assertThat(result.getDisclaimer()).contains("not a diagnosis");
-        assertThat(result.getPromptVersion()).isEqualTo("v3");
+        assertThat(result.getPromptVersion()).isEqualTo("v4");
         verify(aiAnalysisRepository).save(any(AiAnalysis.class));
     }
 
@@ -110,7 +110,7 @@ class AiAnalysisServiceTest {
     void cacheHitSkipsTheLlmCall() {
         Sample s = sampleWithPanel();
         when(sampleRepository.findBySampleId("S-100")).thenReturn(Optional.of(s));
-        AiAnalysis cached = new AiAnalysis(1L, "test-model", "v3", "cached", "[]", "[]", "disc");
+        AiAnalysis cached = new AiAnalysis(1L, "test-model", "v4", "cached", "[]", "[]", "disc");
         when(aiAnalysisRepository.findBySampleFkAndModelAndPromptVersion(any(), anyString(), anyString()))
                 .thenReturn(Optional.of(cached));
 
