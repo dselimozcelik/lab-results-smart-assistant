@@ -28,10 +28,13 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final ObjectMapper objectMapper;
+    private final CorsProperties corsProperties;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter, ObjectMapper objectMapper) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter, ObjectMapper objectMapper,
+                          CorsProperties corsProperties) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.objectMapper = objectMapper;
+        this.corsProperties = corsProperties;
     }
 
     @Bean
@@ -64,7 +67,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOrigins(corsProperties.allowedOrigins());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

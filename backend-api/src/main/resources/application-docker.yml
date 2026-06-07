@@ -1,0 +1,40 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/labresults
+    username: labresults
+    password: labresults
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+lab:
+  cors:
+    allowed-origins:
+      - ${FRONTEND_ORIGIN:http://localhost:5173}
+  jwt:
+    secret: ${JWT_SECRET:docker-demo-secret-change-me-32bytes-minimum-0123456789}
+    expiry-minutes: 60
+  anomaly:
+    critical-factor: 0.5
+  polling:
+    mock-base-url: http://mock-lab-service:8081
+    fixed-delay-ms: 10000
+    timeout: 5s
+    scenario:
+  ollama:
+    base-url: http://host.docker.internal:11434
+    model: ${OLLAMA_MODEL:gemma2:9b}
+    timeout: 60s
