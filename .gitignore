@@ -6,7 +6,8 @@ DECISIONS.md
 .DS_Store
 PROGRESS_LOG.md
 learning-notes/
-docs/
+docs/*
+!docs/demo-guide.md
 
 # Java / Maven
 target/
