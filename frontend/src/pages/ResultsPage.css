@@ -1,0 +1,88 @@
+.results-page {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: var(--sp-8) var(--sp-5);
+}
+
+.results-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--sp-5);
+}
+
+.results-title {
+  font-size: var(--fs-2xl);
+}
+
+.results-count {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+}
+
+.results-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-base);
+}
+
+.results-table thead th {
+  text-align: left;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.results-table tbody td {
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.results-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.results-table tbody tr:hover {
+  background: var(--c-surface-2);
+}
+
+.row-clickable {
+  cursor: pointer;
+}
+
+/* A red left accent draws the eye to critical rows without shouting. */
+.results-table tbody tr.row-critical td:first-child {
+  box-shadow: inset 3px 0 0 var(--c-critical);
+}
+.results-table tbody tr.row-critical:hover {
+  background: var(--c-critical-bg);
+}
+
+.cell-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--c-text);
+}
+
+.cell-muted {
+  color: var(--c-text-muted);
+}
+
+.state-message {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: var(--sp-8) var(--sp-5);
+  color: var(--c-text-muted);
+}

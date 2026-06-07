@@ -1,0 +1,98 @@
+.ai-panel {
+  margin-top: var(--sp-5);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--sp-6);
+}
+
+.ai-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.ai-panel-title {
+  font-size: var(--fs-lg);
+}
+
+.ai-panel-button {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: #fff;
+  background: var(--c-accent);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 9px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ai-panel-button:hover:not(:disabled) {
+  background: var(--c-accent-hover);
+}
+.ai-panel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ai-panel-error {
+  margin: var(--sp-4) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-sm);
+  color: var(--c-critical);
+  background: var(--c-critical-bg);
+  border-radius: var(--radius-md);
+}
+
+.ai-panel-result {
+  margin-top: var(--sp-5);
+  border-top: 1px solid var(--c-border);
+  padding-top: var(--sp-5);
+}
+
+.ai-panel-summary {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-base);
+  line-height: 1.6;
+  color: var(--c-text);
+}
+
+.ai-panel-block {
+  margin-bottom: var(--sp-4);
+}
+.ai-panel-block h3 {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c-text-faint);
+  margin: 0 0 var(--sp-2);
+}
+.ai-panel-block ul {
+  margin: 0;
+  padding-left: var(--sp-5);
+  color: var(--c-text-muted);
+}
+.ai-panel-block li {
+  margin-bottom: var(--sp-1);
+}
+
+.ai-panel-disclaimer {
+  margin: var(--sp-5) 0 0;
+  padding: var(--sp-3);
+  font-size: var(--fs-sm);
+  font-style: italic;
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
+  border-radius: var(--radius-md);
+}
+
+.ai-panel-meta {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--c-text-faint);
+}
