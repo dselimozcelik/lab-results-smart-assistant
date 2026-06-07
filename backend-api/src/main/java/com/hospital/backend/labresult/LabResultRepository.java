@@ -12,14 +12,15 @@ public interface LabResultRepository extends JpaRepository<LabResult, Long> {
 
     boolean existsBySampleId(String sampleId);
 
-    // Each filter is optional: ":param IS NULL OR ..." skips the condition when the param is absent.
+    // Each filter is optional: a CAST tells PostgreSQL the bind parameter's type so it can
+    // resolve "IS NULL" on an otherwise untyped parameter; the OR then skips absent filters.
     @Query("""
             SELECT r FROM LabResult r
-            WHERE (:patientId IS NULL OR r.patientId = :patientId)
-              AND (:testCode  IS NULL OR r.testCode  = :testCode)
-              AND (:status    IS NULL OR r.anomalyStatus = :status)
-              AND (:from      IS NULL OR r.measuredAt >= :from)
-              AND (:to        IS NULL OR r.measuredAt <= :to)
+            WHERE (CAST(:patientId AS string) IS NULL OR r.patientId = :patientId)
+              AND (CAST(:testCode  AS string) IS NULL OR r.testCode  = :testCode)
+              AND (CAST(:status    AS string) IS NULL OR r.anomalyStatus = :status)
+              AND (CAST(:from AS timestamp) IS NULL OR r.measuredAt >= :from)
+              AND (CAST(:to   AS timestamp) IS NULL OR r.measuredAt <= :to)
             """)
     Page<LabResult> search(
             @Param("patientId") String patientId,
