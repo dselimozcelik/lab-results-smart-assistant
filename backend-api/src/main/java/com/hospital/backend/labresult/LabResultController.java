@@ -1,10 +1,12 @@
 package com.hospital.backend.labresult;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,5 +33,12 @@ public class LabResultController {
             @PageableDefault(size = 20) Pageable pageable) {
         return repository.search(patientId, testCode, status, from, to, pageable)
                 .map(LabResultResponse::from);
+    }
+
+    @GetMapping("/{id}")
+    public LabResultResponse getOne(@PathVariable Long id) {
+        return repository.findById(id)
+                .map(LabResultResponse::from)
+                .orElseThrow(() -> new EntityNotFoundException("Lab result not found: " + id));
     }
 }
