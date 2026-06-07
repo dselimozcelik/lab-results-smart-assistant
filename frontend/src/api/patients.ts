@@ -26,6 +26,10 @@ export type PatientDetail = {
 
 export type PatientQuery = {
   patientId?: string;
+  testCode?: string;
+  status?: AnomalyStatus;
+  from?: string;
+  to?: string;
   page?: number;
   size?: number;
   sort?: string;

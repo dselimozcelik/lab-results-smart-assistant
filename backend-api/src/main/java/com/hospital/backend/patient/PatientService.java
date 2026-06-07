@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,15 +28,20 @@ public class PatientService {
     }
 
     @Transactional(readOnly = true)
-    public Page<PatientSummaryResponse> listPatients(String patientId, Pageable pageable) {
-        // Blank filter -> null so the query skips it (matches all patients).
-        String filter = StringUtils.hasText(patientId) ? patientId.trim() : null;
-        return sampleRepository.findPatientSummaries(filter, pageable)
+    public Page<PatientSummaryResponse> listPatients(
+            String patientId,
+            String testCode,
+            AnomalyStatus status,
+            Instant from,
+            Instant to,
+            Pageable pageable) {
+        return sampleRepository.findPatientSummaries(
+                        optionalText(patientId), optionalText(testCode), status, from, to, pageable)
                 .map(row -> new PatientSummaryResponse(
                         row.getPatientId(),
                         row.getTestCount(),
                         row.getSampleCount(),
-                        fromSeverity(row.getWorstSeverity()),
+                        fromSeverity(row.getWorstSeverity(), row.getHighCount()),
                         row.getLastMeasuredAt()));
     }
 
@@ -65,11 +71,15 @@ public class PatientService {
         return new PatientDetailResponse(patientId, samples);
     }
 
-    // Inverse of the severity ranking in the summary query.
-    private AnomalyStatus fromSeverity(int severity) {
+    private String optionalText(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    // HIGH and LOW share the same severity; highCount preserves the correct label.
+    private AnomalyStatus fromSeverity(int severity, long highCount) {
         return switch (severity) {
             case 4 -> AnomalyStatus.CRITICAL;
-            case 3 -> AnomalyStatus.HIGH;
+            case 3 -> highCount > 0 ? AnomalyStatus.HIGH : AnomalyStatus.LOW;
             case 2 -> AnomalyStatus.INVALID;
             default -> AnomalyStatus.NORMAL;
         };

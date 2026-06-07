@@ -69,7 +69,7 @@ class PatientSummaryQueryTest {
         sampleRepository.saveAll(java.util.List.of(a1, a2, b1));
         sampleRepository.flush();
 
-        Page<PatientSummaryRow> page = sampleRepository.findPatientSummaries(null, PageRequest.of(0, 20));
+        Page<PatientSummaryRow> page = summaries(null, null, null, null, null);
 
         assertThat(page.getTotalElements()).isEqualTo(2);
 
@@ -83,5 +83,38 @@ class PatientSummaryQueryTest {
                 .filter(r -> r.getPatientId().equals("P-B")).findFirst().orElseThrow();
         assertThat(b.getTestCount()).isEqualTo(1);
         assertThat(b.getWorstSeverity()).isEqualTo(1); // NORMAL
+    }
+
+    @Test
+    void filtersPatientsAndCalculatesSummaryFromMatchingTests() {
+        Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+
+        Sample a = tube("S-FILTER-A", "P-FILTER-A", now);
+        a.addTest(new LabResult("GLU", "Glucose", 150.0, "mg/dL", 70.0, 110.0, AnomalyStatus.HIGH));
+        a.addTest(new LabResult("HGB", "Haemoglobin", 10.0, "g/dL", 12.0, 16.0, AnomalyStatus.LOW));
+
+        Sample b = tube("S-FILTER-B", "P-FILTER-B", now.minus(10, ChronoUnit.DAYS));
+        b.addTest(new LabResult("GLU", "Glucose", 95.0, "mg/dL", 70.0, 110.0, AnomalyStatus.NORMAL));
+
+        sampleRepository.saveAll(java.util.List.of(a, b));
+        sampleRepository.flush();
+
+        Page<PatientSummaryRow> lowHgb = summaries(
+                "p-filter", "hgb", AnomalyStatus.LOW,
+                now.minus(1, ChronoUnit.DAYS), now.plus(1, ChronoUnit.DAYS));
+
+        assertThat(lowHgb.getTotalElements()).isEqualTo(1);
+        PatientSummaryRow result = lowHgb.getContent().get(0);
+        assertThat(result.getPatientId()).isEqualTo("P-FILTER-A");
+        assertThat(result.getTestCount()).isEqualTo(1);
+        assertThat(result.getSampleCount()).isEqualTo(1);
+        assertThat(result.getWorstSeverity()).isEqualTo(3);
+        assertThat(result.getHighCount()).isZero();
+    }
+
+    private Page<PatientSummaryRow> summaries(
+            String patientId, String testCode, AnomalyStatus status, Instant from, Instant to) {
+        return sampleRepository.findPatientSummaries(
+                patientId, testCode, status, from, to, PageRequest.of(0, 20));
     }
 }

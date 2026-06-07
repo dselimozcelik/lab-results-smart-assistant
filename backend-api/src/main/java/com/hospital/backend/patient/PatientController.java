@@ -1,14 +1,17 @@
 package com.hospital.backend.patient;
 
+import com.hospital.backend.labresult.AnomalyStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.List;
 
 // Patient-centric read API. Level 1 lists patients with a rollup (optionally filtered by patientId
@@ -26,8 +29,12 @@ public class PatientController {
     @GetMapping
     public Page<PatientSummaryResponse> list(
             @RequestParam(required = false) String patientId,
+            @RequestParam(required = false) String testCode,
+            @RequestParam(required = false) AnomalyStatus status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
             @PageableDefault(size = 20) Pageable pageable) {
-        return patientService.listPatients(patientId, pageable);
+        return patientService.listPatients(patientId, testCode, status, from, to, pageable);
     }
 
     @GetMapping("/suggestions")

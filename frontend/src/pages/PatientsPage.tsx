@@ -2,24 +2,53 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { getPatients } from "../api/patients";
+import type { PatientQuery } from "../api/patients";
+import { PatientFilters } from "../components/PatientFilters";
+import type { PatientFilterValues } from "../components/PatientFilters";
 import { PatientSearchBar } from "../components/PatientSearchBar";
 import { StatusBadge } from "../components/StatusBadge";
 import "./ResultsPage.css";
 
 const DEFAULT_PAGE_SIZE = 20;
+const EMPTY_FILTERS: PatientFilterValues = { testCode: "", status: "", from: "", to: "" };
+const STATUS_LABELS = {
+  NORMAL: "Normal",
+  LOW: "Düşük",
+  HIGH: "Yüksek",
+  CRITICAL: "Kritik",
+  INVALID: "Geçersiz",
+} as const;
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString("tr-TR");
 }
 
+function startOfDay(date: string): string | undefined {
+  return date ? new Date(`${date}T00:00:00`).toISOString() : undefined;
+}
+
+function endOfDay(date: string): string | undefined {
+  return date ? new Date(`${date}T23:59:59.999`).toISOString() : undefined;
+}
+
 export function PatientsPage() {
   const [draftPatientId, setDraftPatientId] = useState("");
   const [patientId, setPatientId] = useState("");
+  const [draftFilters, setDraftFilters] = useState<PatientFilterValues>(EMPTY_FILTERS);
+  const [filters, setFilters] = useState<PatientFilterValues>(EMPTY_FILTERS);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const navigate = useNavigate();
 
-  const query = { patientId: patientId || undefined, page, size: pageSize };
+  const query: PatientQuery = {
+    patientId: patientId || undefined,
+    testCode: filters.testCode.trim() || undefined,
+    status: filters.status || undefined,
+    from: startOfDay(filters.from),
+    to: endOfDay(filters.to),
+    page,
+    size: pageSize,
+  };
 
   const { data, isPending, isFetching, isError, error } = useQuery({
     queryKey: ["patients", query],
@@ -32,8 +61,9 @@ export function PatientsPage() {
     setPage(0);
   }
 
-  function applyPatientSearch() {
+  function applyAllFilters() {
     setPatientId(draftPatientId.trim());
+    setFilters({ ...draftFilters, testCode: draftFilters.testCode.trim() });
     setPage(0);
   }
 
@@ -43,6 +73,20 @@ export function PatientsPage() {
     setPage(0);
   }
 
+  function clearAdvancedFilters() {
+    setDraftFilters(EMPTY_FILTERS);
+    setFilters(EMPTY_FILTERS);
+    setPage(0);
+  }
+
+  function clearAllFilters() {
+    setDraftPatientId("");
+    setPatientId("");
+    clearAdvancedFilters();
+  }
+
+  const activeAdvancedFilterCount = Object.values(filters).filter(Boolean).length;
+  const hasAnyFilter = Boolean(patientId) || activeAdvancedFilterCount > 0;
   const firstResult = data && data.totalElements > 0 ? data.number * data.size + 1 : 0;
   const lastResult = data ? Math.min((data.number + 1) * data.size, data.totalElements) : 0;
 
@@ -63,10 +107,31 @@ export function PatientsPage() {
       <PatientSearchBar
         value={draftPatientId}
         onChange={setDraftPatientId}
-        onApply={applyPatientSearch}
+        onApply={applyAllFilters}
         onClear={clearPatientSearch}
         isApplying={isFetching}
       />
+
+      <PatientFilters
+        values={draftFilters}
+        activeCount={activeAdvancedFilterCount}
+        isApplying={isFetching}
+        onChange={setDraftFilters}
+        onApply={applyAllFilters}
+        onClear={clearAdvancedFilters}
+      />
+
+      {hasAnyFilter && (
+        <div className="active-filter-row" aria-live="polite">
+          <span>Liste filtreleniyor</span>
+          {patientId && <strong>Hasta: {patientId}</strong>}
+          {filters.testCode && <strong>Test: {filters.testCode}</strong>}
+          {filters.status && <strong>Durum: {STATUS_LABELS[filters.status]}</strong>}
+          {filters.from && <strong>Başlangıç: {filters.from}</strong>}
+          {filters.to && <strong>Bitiş: {filters.to}</strong>}
+          <button type="button" onClick={clearAllFilters}>Tümünü temizle</button>
+        </div>
+      )}
 
       {isError && (
         <p className="state-message" role="alert">
@@ -162,8 +227,8 @@ export function PatientsPage() {
       {data && data.content.length === 0 && (
         <div className="empty-state">
           <strong>Bu aramayla eşleşen hasta bulunamadı.</strong>
-          <p>Hasta numarasını değiştirin veya tüm hastaları tekrar gösterin.</p>
-          <button type="button" onClick={clearPatientSearch}>Tüm hastaları göster</button>
+          <p>Arama ve filtre değerlerini değiştirin veya tüm hastaları tekrar gösterin.</p>
+          <button type="button" onClick={clearAllFilters}>Tüm hastaları göster</button>
         </div>
       )}
     </div>

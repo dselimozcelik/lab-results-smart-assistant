@@ -1,0 +1,118 @@
+.patient-filters {
+  margin: calc(var(--sp-5) * -1) 0 var(--sp-5);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.patient-filters summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-5);
+  color: var(--c-accent);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filter-summary-copy {
+  color: var(--c-text-muted);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+}
+
+.filter-fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  border-top: 1px solid var(--c-border);
+}
+
+.filter-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  color: var(--c-text-muted);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+}
+
+.filter-fields input,
+.filter-fields select {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-md);
+}
+
+.filter-fields input:focus,
+.filter-fields select:focus {
+  outline: none;
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px var(--c-accent-ring);
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-5) var(--sp-4);
+}
+
+.filter-actions button {
+  padding: 8px 13px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.filter-clear {
+  color: var(--c-accent);
+  background: transparent;
+  border: 1px solid var(--c-border-strong);
+}
+
+.filter-apply {
+  color: #fff;
+  font-weight: 600;
+  background: var(--c-accent);
+  border: 1px solid var(--c-accent);
+}
+
+.filter-actions button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+@media (max-width: 800px) {
+  .filter-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .patient-filters summary,
+  .filter-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .filter-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-actions button {
+    width: 100%;
+  }
+}

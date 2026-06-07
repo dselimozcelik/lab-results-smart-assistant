@@ -10,5 +10,6 @@ public interface PatientSummaryRow {
     long getTestCount();
     long getSampleCount();
     int getWorstSeverity();
+    long getHighCount();
     Instant getLastMeasuredAt();
 }
