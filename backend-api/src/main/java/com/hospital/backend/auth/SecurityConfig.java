@@ -44,7 +44,13 @@ public class SecurityConfig {
                 .cors(cors -> {}) // use the CorsConfigurationSource bean below
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/actuator/health").permitAll()
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/actuator/health",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e.authenticationEntryPoint(unauthorizedEntryPoint()))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

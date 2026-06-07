@@ -103,6 +103,13 @@ class BackendApiIntegrationTest {
     }
 
     @Test
+    void openApiDocumentationIsPubliclyAvailable() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.openapi").isString());
+    }
+
+    @Test
     void invalidTestIsStoredAndExplainedInAuditDetails() {
         SampleBatchDto tube = new SampleBatchDto(
                 "S-INTEGRATION", "P-INTEGRATION", Instant.now(), "DEV-1",
