@@ -2,6 +2,8 @@ package com.hospital.backend.labresult;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -48,6 +50,10 @@ public class LabResult {
     @Column(name = "device_id", nullable = false)
     private String deviceId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "anomaly_status", nullable = false)
+    private AnomalyStatus anomalyStatus;
+
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;
 
@@ -57,7 +63,7 @@ public class LabResult {
 
     public LabResult(String sampleId, String patientId, String testCode, String testName,
                      Double value, String unit, Double referenceMin, Double referenceMax,
-                     Instant measuredAt, String deviceId) {
+                     Instant measuredAt, String deviceId, AnomalyStatus anomalyStatus) {
         this.sampleId = sampleId;
         this.patientId = patientId;
         this.testCode = testCode;
@@ -68,6 +74,7 @@ public class LabResult {
         this.referenceMax = referenceMax;
         this.measuredAt = measuredAt;
         this.deviceId = deviceId;
+        this.anomalyStatus = anomalyStatus;
     }
 
     public Long getId() {
@@ -112,6 +119,10 @@ public class LabResult {
 
     public String getDeviceId() {
         return deviceId;
+    }
+
+    public AnomalyStatus getAnomalyStatus() {
+        return anomalyStatus;
     }
 
     public Instant getCreatedAt() {

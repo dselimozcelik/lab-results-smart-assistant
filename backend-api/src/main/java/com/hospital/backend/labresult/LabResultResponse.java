@@ -15,12 +15,13 @@ public record LabResultResponse(
         Double referenceMax,
         Instant measuredAt,
         String deviceId,
+        AnomalyStatus anomalyStatus,
         Instant createdAt
 ) {
     public static LabResultResponse from(LabResult e) {
         return new LabResultResponse(
                 e.getId(), e.getSampleId(), e.getPatientId(), e.getTestCode(), e.getTestName(),
                 e.getValue(), e.getUnit(), e.getReferenceMin(), e.getReferenceMax(),
-                e.getMeasuredAt(), e.getDeviceId(), e.getCreatedAt());
+                e.getMeasuredAt(), e.getDeviceId(), e.getAnomalyStatus(), e.getCreatedAt());
     }
 }

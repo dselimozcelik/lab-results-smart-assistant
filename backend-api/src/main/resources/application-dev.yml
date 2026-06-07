@@ -28,6 +28,10 @@ lab:
     # Dev-only secret (>= 256 bits for HS256). In production this comes from a secret manager.
     secret: dev-secret-change-me-please-32bytes-minimum-0123456789
     expiry-minutes: 60
+  anomaly:
+    # How far beyond a reference bound (as a fraction of the range width) is CRITICAL.
+    # Documented heuristic, not a clinical panic value (see CLAUDE.md business rules).
+    critical-factor: 0.5
   polling:
     mock-base-url: http://localhost:8081
     fixed-delay-ms: 10000
