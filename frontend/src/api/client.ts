@@ -1,6 +1,7 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
 let authToken: string | null = null;
+let unauthorizedHandler: (() => void) | null = null;
 
 export function setAuthToken(token: string | null): void {
   authToken = token;
@@ -8,6 +9,10 @@ export function setAuthToken(token: string | null): void {
 
 export function getAuthToken(): string | null {
   return authToken;
+}
+
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  unauthorizedHandler = handler;
 }
 
 export class ApiError extends Error {
@@ -42,7 +47,11 @@ export async function apiFetch<T>(path: string, options: Options = {}): Promise<
 
   // fetch does not throw on 4xx/5xx; surface them as a typed error.
   if (!response.ok) {
-    throw new ApiError(response.status, await readError(response));
+    const error = new ApiError(response.status, await readError(response));
+    if (response.status === 401 && authToken) {
+      unauthorizedHandler?.();
+    }
+    throw error;
   }
 
   if (response.status === 204) {

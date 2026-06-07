@@ -76,6 +76,15 @@
   border-radius: var(--radius-md);
 }
 
+.login-notice {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
+  color: var(--c-accent);
+  font-size: var(--fs-sm);
+  background: var(--c-accent-soft);
+  border-radius: var(--radius-md);
+}
+
 .login-button {
   width: 100%;
   font-family: var(--font-sans);

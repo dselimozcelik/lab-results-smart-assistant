@@ -3,27 +3,18 @@ import { LoginPage } from "./pages/LoginPage";
 import { PatientsPage } from "./pages/PatientsPage";
 import { PatientDetailPage } from "./pages/PatientDetailPage";
 import { RequireAuth } from "./components/RequireAuth";
+import { AppShell } from "./components/AppShell";
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route
-        path="/"
-        element={
-          <RequireAuth>
-            <PatientsPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/patients/:patientId"
-        element={
-          <RequireAuth>
-            <PatientDetailPage />
-          </RequireAuth>
-        }
-      />
+      <Route element={<RequireAuth />}>
+        <Route element={<AppShell />}>
+          <Route index element={<PatientsPage />} />
+          <Route path="/patients/:patientId" element={<PatientDetailPage />} />
+        </Route>
+      </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
