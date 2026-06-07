@@ -1,7 +1,7 @@
 package com.hospital.backend.patient;
 
+import com.hospital.backend.common.PageResponse;
 import com.hospital.backend.labresult.AnomalyStatus;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -27,14 +27,14 @@ public class PatientController {
     }
 
     @GetMapping
-    public Page<PatientSummaryResponse> list(
+    public PageResponse<PatientSummaryResponse> list(
             @RequestParam(required = false) String patientId,
             @RequestParam(required = false) String testCode,
             @RequestParam(required = false) AnomalyStatus status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
             @PageableDefault(size = 20) Pageable pageable) {
-        return patientService.listPatients(patientId, testCode, status, from, to, pageable);
+        return PageResponse.from(patientService.listPatients(patientId, testCode, status, from, to, pageable));
     }
 
     @GetMapping("/suggestions")
