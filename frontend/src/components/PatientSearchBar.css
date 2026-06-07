@@ -1,0 +1,147 @@
+.patient-search {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.8fr) minmax(260px, 1.4fr) auto;
+  align-items: end;
+  gap: var(--sp-5);
+  margin-bottom: var(--sp-5);
+  padding: var(--sp-5);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.patient-search-copy h2 {
+  font-size: var(--fs-lg);
+}
+
+.patient-search-copy p {
+  margin: var(--sp-1) 0 0;
+  color: var(--c-text-muted);
+  font-size: var(--fs-sm);
+}
+
+.patient-search-control {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.patient-search-control label {
+  color: var(--c-text-muted);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+}
+
+.patient-search-control input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-md);
+}
+
+.patient-search-control input:focus {
+  outline: none;
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px var(--c-accent-ring);
+}
+
+.patient-suggestions {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + var(--sp-2));
+  left: 0;
+  right: 0;
+  padding: var(--sp-1);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.patient-suggestions button,
+.patient-suggestions span {
+  display: block;
+  width: 100%;
+  padding: 9px 10px;
+  text-align: left;
+}
+
+.patient-suggestions button {
+  color: var(--c-text);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.patient-suggestions button:hover,
+.patient-suggestions button:focus-visible {
+  background: var(--c-accent-soft);
+}
+
+.patient-suggestions span {
+  color: var(--c-text-muted);
+  font-size: var(--fs-xs);
+}
+
+.patient-search-actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.patient-search-actions button {
+  padding: 9px 14px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.patient-search-clear {
+  color: var(--c-accent);
+  background: transparent;
+  border: 1px solid var(--c-border-strong);
+}
+
+.patient-search-clear:hover {
+  background: var(--c-accent-soft);
+  border-color: var(--c-accent);
+}
+
+.patient-search-apply {
+  color: #fff;
+  font-weight: 600;
+  background: var(--c-accent);
+  border: 1px solid var(--c-accent);
+}
+
+.patient-search-apply:hover:not(:disabled) {
+  background: var(--c-accent-hover);
+}
+
+.patient-search-apply:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+@media (max-width: 800px) {
+  .patient-search {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: var(--sp-4);
+  }
+
+  .patient-search-actions {
+    justify-content: flex-end;
+  }
+}

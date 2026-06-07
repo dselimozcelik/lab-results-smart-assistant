@@ -2,6 +2,7 @@ package com.hospital.backend.labresult;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/lab-results")
@@ -33,6 +35,18 @@ public class LabResultController {
             @PageableDefault(size = 20) Pageable pageable) {
         return repository.search(patientId, testCode, status, from, to, pageable)
                 .map(LabResultResponse::from);
+    }
+
+    @GetMapping("/patient-suggestions")
+    public List<String> patientSuggestions(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "8") int limit) {
+        String prefix = query.trim();
+        if (prefix.length() < 2) {
+            return List.of();
+        }
+        int safeLimit = Math.max(1, Math.min(limit, 20));
+        return repository.findPatientIdSuggestions(prefix, PageRequest.of(0, safeLimit));
     }
 
     @GetMapping("/{id}")

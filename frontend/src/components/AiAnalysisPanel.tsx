@@ -2,9 +2,9 @@ import { useMutation } from "@tanstack/react-query";
 import { requestAiAnalysis } from "../api/aiAnalysis";
 import "./AiAnalysisPanel.css";
 
-export function AiAnalysisPanel({ labResultId }: { labResultId: number }) {
+export function AiAnalysisPanel({ sampleId }: { sampleId: string }) {
   const mutation = useMutation({
-    mutationFn: () => requestAiAnalysis(labResultId),
+    mutationFn: () => requestAiAnalysis(sampleId),
   });
 
   return (

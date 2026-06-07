@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+// Shared types for lab data. The patient-centric API (api/patients.ts) reuses these.
 
 export type AnomalyStatus = "NORMAL" | "LOW" | "HIGH" | "CRITICAL" | "INVALID";
 
@@ -26,26 +26,3 @@ export type Page<T> = {
   number: number;
   size: number;
 };
-
-export type LabResultFilters = {
-  patientId?: string;
-  testCode?: string;
-  status?: AnomalyStatus | "";
-  from?: string;
-  to?: string;
-};
-
-export function getLabResult(id: number | string): Promise<LabResult> {
-  return apiFetch<LabResult>(`/api/lab-results/${id}`);
-}
-
-export function getLabResults(filters: LabResultFilters = {}): Promise<Page<LabResult>> {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(filters)) {
-    if (value) {
-      params.set(key, value);
-    }
-  }
-  const query = params.toString();
-  return apiFetch<Page<LabResult>>(`/api/lab-results${query ? `?${query}` : ""}`);
-}

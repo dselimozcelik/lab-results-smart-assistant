@@ -1,0 +1,119 @@
+import { useQuery } from "@tanstack/react-query";
+import { Link, useParams } from "react-router-dom";
+import { getPatient } from "../api/patients";
+import type { SampleGroup } from "../api/patients";
+import type { AnomalyStatus, LabResult } from "../api/labResults";
+import { StatusBadge } from "../components/StatusBadge";
+import { ReferenceRangeBar } from "../components/ReferenceRangeBar";
+import { AiAnalysisPanel } from "../components/AiAnalysisPanel";
+import "./PatientDetailPage.css";
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleString("tr-TR");
+}
+
+// Most severe first so a doctor sees problems at the top of each tube.
+const SEVERITY: Record<AnomalyStatus, number> = {
+  CRITICAL: 4, HIGH: 3, LOW: 3, INVALID: 2, NORMAL: 1,
+};
+
+function abnormalFirst(tests: LabResult[]): LabResult[] {
+  return [...tests].sort((a, b) => SEVERITY[b.anomalyStatus] - SEVERITY[a.anomalyStatus]);
+}
+
+function isAbnormal(status: AnomalyStatus): boolean {
+  return status !== "NORMAL";
+}
+
+export function PatientDetailPage() {
+  const { patientId } = useParams();
+
+  const { data, isPending, isError, error } = useQuery({
+    queryKey: ["patient", patientId],
+    queryFn: () => getPatient(patientId!),
+  });
+
+  if (isPending) {
+    return <p className="state-message">Yükleniyor…</p>;
+  }
+
+  if (isError) {
+    return (
+      <div className="patient-detail">
+        <Link to="/" className="detail-back">← Hasta listesine dön</Link>
+        <p className="state-message" role="alert">
+          Hasta bulunamadı: {(error as Error).message}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="patient-detail">
+      <Link to="/" className="detail-back">← Hasta listesine dön</Link>
+
+      <div className="patient-detail-header">
+        <p className="detail-eyebrow">Hasta</p>
+        <h1 className="detail-title">{data.patientId}</h1>
+        <p className="patient-detail-sub">{data.samples.length} numune (tüp)</p>
+      </div>
+
+      {data.samples.map((sample) => (
+        <TubeCard key={sample.sampleId} sample={sample} />
+      ))}
+    </div>
+  );
+}
+
+function TubeCard({ sample }: { sample: SampleGroup }) {
+  const tests = abnormalFirst(sample.tests);
+
+  return (
+    <section className="tube-card">
+      <div className="tube-head">
+        <div>
+          <h2 className="tube-title">Tüp {sample.sampleId}</h2>
+          <p className="tube-meta">{formatDate(sample.measuredAt)} · {sample.deviceId}</p>
+        </div>
+        <StatusBadge status={sample.worstStatus} />
+      </div>
+
+      <div className="tube-table-scroll">
+        <table className="tube-table">
+          <thead>
+            <tr>
+              <th>Test</th>
+              <th>Değer</th>
+              <th>Referans aralığı</th>
+              <th>Durum</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tests.map((t) => (
+              <tr key={t.id} className={isAbnormal(t.anomalyStatus) ? "row-abnormal" : ""}>
+                <td>
+                  <strong>{t.testName}</strong>
+                  <span className="cell-secondary">{t.testCode}</span>
+                </td>
+                <td className="cell-value">
+                  {t.value ?? "—"} <span className="cell-muted">{t.unit ?? ""}</span>
+                </td>
+                <td>
+                  <ReferenceRangeBar
+                    value={t.value}
+                    referenceMin={t.referenceMin}
+                    referenceMax={t.referenceMax}
+                    status={t.anomalyStatus}
+                  />
+                </td>
+                <td><StatusBadge status={t.anomalyStatus} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <AiAnalysisPanel sampleId={sample.sampleId} />
+    </section>
+  );
+}

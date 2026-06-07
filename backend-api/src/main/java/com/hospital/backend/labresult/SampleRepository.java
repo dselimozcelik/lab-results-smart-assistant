@@ -20,7 +20,8 @@ public interface SampleRepository extends JpaRepository<Sample, Long> {
 
     // Level-1 rollup: one row per patient. worstSeverity ranks the most severe status across the
     // patient's tests in SQL (CRITICAL=4 > HIGH/LOW=3 > INVALID=2 > NORMAL=1); the service maps it
-    // back to an AnomalyStatus. Grouping over the test rows joined to their sample.
+    // back to an AnomalyStatus. The optional patientId is a prefix filter; the CAST(... AS string)
+    // IS NULL trick lets PostgreSQL skip it when absent.
     @Query("""
             SELECT s.patientId AS patientId,
                    COUNT(r) AS testCount,
@@ -33,10 +34,19 @@ public interface SampleRepository extends JpaRepository<Sample, Long> {
                          ELSE 1 END) AS worstSeverity,
                    MAX(s.measuredAt) AS lastMeasuredAt
             FROM LabResult r JOIN r.sample s
+            WHERE (CAST(:patientId AS string) IS NULL
+                    OR LOWER(s.patientId) LIKE LOWER(CONCAT(CAST(:patientId AS string), '%')))
             GROUP BY s.patientId
             ORDER BY MAX(s.measuredAt) DESC
             """)
-    Page<PatientSummaryRow> findPatientSummaries(Pageable pageable);
+    Page<PatientSummaryRow> findPatientSummaries(@Param("patientId") String patientId, Pageable pageable);
+
+    @Query("""
+            SELECT DISTINCT s.patientId FROM Sample s
+            WHERE LOWER(s.patientId) LIKE LOWER(CONCAT(:prefix, '%'))
+            ORDER BY s.patientId
+            """)
+    List<String> findPatientIdSuggestions(@Param("prefix") String prefix, Pageable pageable);
 
     Optional<Sample> findBySampleId(String sampleId);
 }

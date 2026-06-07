@@ -1,0 +1,57 @@
+.refbar {
+  min-width: 120px;
+}
+
+.refbar--empty {
+  color: var(--c-text-faint, var(--c-text-muted));
+  font-size: var(--fs-xs);
+  text-align: center;
+}
+
+.refbar-track {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--c-surface-2);
+  overflow: visible;
+}
+
+/* The in-range reference band occupies the middle 20%..80% of the track. */
+.refbar-band {
+  position: absolute;
+  left: 20%;
+  right: 20%;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: var(--c-normal-bg);
+  border: 1px solid var(--c-normal);
+  opacity: 0.7;
+}
+
+.refbar-marker {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--c-surface);
+  box-shadow: 0 0 0 1px var(--c-border-strong);
+  background: var(--c-normal);
+}
+
+.refbar-marker--normal { background: var(--c-normal); }
+.refbar-marker--low { background: var(--c-low); }
+.refbar-marker--high { background: var(--c-high); }
+.refbar-marker--critical { background: var(--c-critical); }
+.refbar-marker--invalid { background: var(--c-invalid); }
+
+.refbar-bounds {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  font-family: var(--font-mono, monospace);
+}

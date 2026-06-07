@@ -69,7 +69,7 @@ class PatientSummaryQueryTest {
         sampleRepository.saveAll(java.util.List.of(a1, a2, b1));
         sampleRepository.flush();
 
-        Page<PatientSummaryRow> page = sampleRepository.findPatientSummaries(PageRequest.of(0, 20));
+        Page<PatientSummaryRow> page = sampleRepository.findPatientSummaries(null, PageRequest.of(0, 20));
 
         assertThat(page.getTotalElements()).isEqualTo(2);
 

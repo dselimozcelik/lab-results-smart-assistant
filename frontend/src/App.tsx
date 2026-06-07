@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { LoginPage } from "./pages/LoginPage";
-import { ResultsPage } from "./pages/ResultsPage";
-import { DetailPage } from "./pages/DetailPage";
+import { PatientsPage } from "./pages/PatientsPage";
+import { PatientDetailPage } from "./pages/PatientDetailPage";
 import { RequireAuth } from "./components/RequireAuth";
 
 function App() {
@@ -12,15 +12,15 @@ function App() {
         path="/"
         element={
           <RequireAuth>
-            <ResultsPage />
+            <PatientsPage />
           </RequireAuth>
         }
       />
       <Route
-        path="/results/:id"
+        path="/patients/:patientId"
         element={
           <RequireAuth>
-            <DetailPage />
+            <PatientDetailPage />
           </RequireAuth>
         }
       />
