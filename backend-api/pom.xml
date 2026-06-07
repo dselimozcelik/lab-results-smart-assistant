@@ -19,6 +19,10 @@
 
     <properties>
         <java.version>17</java.version>
+        <!-- Spring Boot 3.3.5 pins Testcontainers 1.19.x, whose bundled docker-java cannot
+             negotiate the API version with newer Docker Desktop daemons (HTTP 400 on /info).
+             1.20.x fixes the negotiation. -->
+        <testcontainers.version>1.20.4</testcontainers.version>
     </properties>
 
     <dependencies>
@@ -83,6 +87,26 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>mockwebserver</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -90,6 +114,16 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- Pin the Docker API version docker-java negotiates: newer Docker Desktop
+                         daemons reject the version docker-java otherwise picks (HTTP 400 on /info).
+                         1.47 is broadly supported, so this is safe on CI too. -->
+                    <argLine>-Dapi.version=1.47</argLine>
+                </configuration>
             </plugin>
         </plugins>
     </build>
