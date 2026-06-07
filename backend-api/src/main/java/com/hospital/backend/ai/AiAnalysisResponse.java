@@ -7,7 +7,7 @@ import java.util.List;
 // so the client receives proper arrays, not strings.
 public record AiAnalysisResponse(
         Long id,
-        Long labResultId,
+        Long sampleFk,
         String model,
         String promptVersion,
         String summary,

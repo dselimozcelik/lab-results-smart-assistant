@@ -3,18 +3,19 @@ package com.hospital.backend.ai;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hospital.backend.ai.OllamaDtos.ModelContent;
-import com.hospital.backend.labresult.LabResult;
-import com.hospital.backend.labresult.LabResultRepository;
+import com.hospital.backend.labresult.Sample;
+import com.hospital.backend.labresult.SampleRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-// Orchestrates one AI analysis: cache lookup -> deterministic summary -> prompt -> Ollama
-// -> parse JSON -> attach the backend-enforced disclaimer -> persist. Cached by
-// (labResultId, model, promptVersion) so a repeat request never re-calls the LLM.
+// Orchestrates one AI analysis for a tube (panel): cache lookup -> deterministic summary ->
+// prompt -> Ollama -> parse JSON -> attach the backend-enforced disclaimer -> persist. Cached by
+// (sampleFk, model, promptVersion) so a repeat request never re-calls the LLM.
 @Service
 public class AiAnalysisService {
 
@@ -25,7 +26,7 @@ public class AiAnalysisService {
             "This is a preliminary, AI-assisted analysis to support a doctor. "
             + "It is not a diagnosis and must be reviewed by a qualified clinician.";
 
-    private final LabResultRepository labResultRepository;
+    private final SampleRepository sampleRepository;
     private final AiAnalysisRepository aiAnalysisRepository;
     private final AnomalySummaryBuilder summaryBuilder;
     private final PromptTemplate promptTemplate;
@@ -33,14 +34,14 @@ public class AiAnalysisService {
     private final OllamaProperties props;
     private final ObjectMapper objectMapper;
 
-    public AiAnalysisService(LabResultRepository labResultRepository,
+    public AiAnalysisService(SampleRepository sampleRepository,
                              AiAnalysisRepository aiAnalysisRepository,
                              AnomalySummaryBuilder summaryBuilder,
                              PromptTemplate promptTemplate,
                              OllamaClient ollamaClient,
                              OllamaProperties props,
                              ObjectMapper objectMapper) {
-        this.labResultRepository = labResultRepository;
+        this.sampleRepository = sampleRepository;
         this.aiAnalysisRepository = aiAnalysisRepository;
         this.summaryBuilder = summaryBuilder;
         this.promptTemplate = promptTemplate;
@@ -49,18 +50,20 @@ public class AiAnalysisService {
         this.objectMapper = objectMapper;
     }
 
-    public AiAnalysis analyze(Long labResultId) {
-        LabResult result = labResultRepository.findById(labResultId)
-                .orElseThrow(() -> new EntityNotFoundException("Lab result not found: " + labResultId));
+    // Transactional + readOnly so the tube's lazy test collection can be read while building the summary.
+    @Transactional
+    public AiAnalysis analyze(String sampleId) {
+        Sample sample = sampleRepository.findBySampleId(sampleId)
+                .orElseThrow(() -> new EntityNotFoundException("Sample not found: " + sampleId));
 
-        // Cache hit: same result + model + prompt version already analysed.
+        // Cache hit: same tube + model + prompt version already analysed.
         return aiAnalysisRepository
-                .findByLabResultIdAndModelAndPromptVersion(labResultId, props.model(), PromptTemplate.VERSION)
-                .orElseGet(() -> generateAndSave(result));
+                .findBySampleFkAndModelAndPromptVersion(sample.getId(), props.model(), PromptTemplate.VERSION)
+                .orElseGet(() -> generateAndSave(sample));
     }
 
-    private AiAnalysis generateAndSave(LabResult result) {
-        String prompt = promptTemplate.render(summaryBuilder.build(result));
+    private AiAnalysis generateAndSave(Sample sample) {
+        String prompt = promptTemplate.render(summaryBuilder.build(sample));
 
         String rawJson = ollamaClient.generate(prompt);
         if (rawJson == null || rawJson.isBlank()) {
@@ -70,7 +73,7 @@ public class AiAnalysisService {
         ModelContent content = parse(rawJson);
 
         AiAnalysis analysis = new AiAnalysis(
-                result.getId(), props.model(), PromptTemplate.VERSION,
+                sample.getId(), props.model(), PromptTemplate.VERSION,
                 content.summary(),
                 writeJson(content.flaggedTests()),
                 writeJson(content.suggestedFollowups()),

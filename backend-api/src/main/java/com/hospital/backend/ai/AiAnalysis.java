@@ -9,7 +9,7 @@ import jakarta.persistence.Table;
 
 import java.time.Instant;
 
-// One cached LLM analysis for a lab result. Maps 1:1 to the ai_analysis table (Flyway-owned).
+// One cached LLM analysis for a tube (sample/panel). Maps 1:1 to the ai_analysis table.
 // flaggedTests / suggestedFollowups hold a JSON array string (parsed to a list at the API edge).
 @Entity
 @Table(name = "ai_analysis")
@@ -19,8 +19,8 @@ public class AiAnalysis {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "lab_result_id", nullable = false)
-    private Long labResultId;
+    @Column(name = "sample_fk", nullable = false)
+    private Long sampleFk;
 
     @Column(nullable = false)
     private String model;
@@ -47,9 +47,9 @@ public class AiAnalysis {
         // JPA
     }
 
-    public AiAnalysis(Long labResultId, String model, String promptVersion, String summary,
+    public AiAnalysis(Long sampleFk, String model, String promptVersion, String summary,
                       String flaggedTests, String suggestedFollowups, String disclaimer) {
-        this.labResultId = labResultId;
+        this.sampleFk = sampleFk;
         this.model = model;
         this.promptVersion = promptVersion;
         this.summary = summary;
@@ -62,8 +62,8 @@ public class AiAnalysis {
         return id;
     }
 
-    public Long getLabResultId() {
-        return labResultId;
+    public Long getSampleFk() {
+        return sampleFk;
     }
 
     public String getModel() {

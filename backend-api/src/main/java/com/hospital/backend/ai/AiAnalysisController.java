@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/lab-results/{id}/ai-analysis")
+@RequestMapping("/api/samples/{sampleId}/ai-analysis")
 public class AiAnalysisController {
 
     private static final TypeReference<List<String>> STRING_LIST = new TypeReference<>() {
@@ -27,10 +27,10 @@ public class AiAnalysisController {
 
     // Synchronous for the demo (README notes production would queue this).
     @PostMapping
-    public AiAnalysisResponse analyze(@PathVariable Long id) {
-        AiAnalysis a = service.analyze(id);
+    public AiAnalysisResponse analyze(@PathVariable String sampleId) {
+        AiAnalysis a = service.analyze(sampleId);
         return new AiAnalysisResponse(
-                a.getId(), a.getLabResultId(), a.getModel(), a.getPromptVersion(),
+                a.getId(), a.getSampleFk(), a.getModel(), a.getPromptVersion(),
                 a.getSummary(),
                 readList(a.getFlaggedTests()),
                 readList(a.getSuggestedFollowups()),
