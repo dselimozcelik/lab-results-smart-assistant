@@ -26,7 +26,7 @@ public class DeviceResultController {
     // ?scenario=... forces one specific case for demos/tests.
     // ?seed=... makes the random batch reproducible (used by tests).
     @GetMapping("/batch")
-    public ResponseEntity<List<DeviceResultDto>> batch(
+    public ResponseEntity<List<SampleBatchDto>> batch(
             @RequestParam(required = false) String scenario,
             @RequestParam(required = false) Long seed) {
 
