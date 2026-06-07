@@ -16,6 +16,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -46,19 +47,23 @@ class AiAnalysisServiceTest {
         sampleRepository = mock(SampleRepository.class);
         aiAnalysisRepository = mock(AiAnalysisRepository.class);
 
+        configureService(Duration.ofSeconds(5));
+
+        // Default: the analysis cache is empty, and save() returns its argument.
+        when(aiAnalysisRepository.findBySampleFkAndModelAndPromptVersion(anyLong(), anyString(), anyString()))
+                .thenReturn(Optional.empty());
+        when(aiAnalysisRepository.save(any(AiAnalysis.class))).thenAnswer(inv -> inv.getArgument(0));
+    }
+
+    private void configureService(Duration timeout) {
         OllamaProperties props = new OllamaProperties(
-                ollamaServer.url("/").toString(), "test-model", Duration.ofSeconds(5));
+                ollamaServer.url("/").toString(), "test-model", timeout);
         WebClient webClient = WebClient.builder().baseUrl(props.baseUrl()).build();
         OllamaClient ollamaClient = new OllamaClient(webClient, props);
 
         service = new AiAnalysisService(sampleRepository, aiAnalysisRepository,
                 new AnomalySummaryBuilder(), new PromptTemplate(), ollamaClient, props,
                 new ObjectMapper());
-
-        // Default: the analysis cache is empty, and save() returns its argument.
-        when(aiAnalysisRepository.findBySampleFkAndModelAndPromptVersion(anyLong(), anyString(), anyString()))
-                .thenReturn(Optional.empty());
-        when(aiAnalysisRepository.save(any(AiAnalysis.class))).thenAnswer(inv -> inv.getArgument(0));
     }
 
     @AfterEach
@@ -162,5 +167,19 @@ class AiAnalysisServiceTest {
         assertThatThrownBy(() -> service.analyze("S-100"))
                 .isInstanceOf(AiAnalysisException.class)
                 .hasMessageContaining("malformed");
+    }
+
+    @Test
+    void timeoutBecomesGracefulAiFailureWithoutSaving() {
+        configureService(Duration.ofMillis(100));
+        when(sampleRepository.findBySampleId("S-100")).thenReturn(Optional.of(sampleWithPanel()));
+        ollamaServer.enqueue(new MockResponse()
+                .setBody("{}")
+                .setBodyDelay(1, TimeUnit.SECONDS));
+
+        assertThatThrownBy(() -> service.analyze("S-100"))
+                .isInstanceOf(AiAnalysisException.class)
+                .hasMessageContaining("Language model request failed");
+        verify(aiAnalysisRepository, never()).save(any());
     }
 }

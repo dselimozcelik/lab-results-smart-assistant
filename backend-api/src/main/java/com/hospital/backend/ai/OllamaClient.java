@@ -19,13 +19,17 @@ public class OllamaClient {
     }
 
     public String generate(String prompt) {
-        GenerateResponse response = ollamaWebClient.post()
-                .uri("/api/generate")
-                .bodyValue(GenerateRequest.of(props.model(), prompt))
-                .retrieve()
-                .bodyToMono(GenerateResponse.class)
-                .block(props.timeout());
+        try {
+            GenerateResponse response = ollamaWebClient.post()
+                    .uri("/api/generate")
+                    .bodyValue(GenerateRequest.of(props.model(), prompt))
+                    .retrieve()
+                    .bodyToMono(GenerateResponse.class)
+                    .block(props.timeout());
 
-        return response == null ? null : response.response();
+            return response == null ? null : response.response();
+        } catch (RuntimeException e) {
+            throw new AiAnalysisException("Language model request failed", e);
+        }
     }
 }
