@@ -43,9 +43,9 @@ lab:
   ollama:
     # Local LLM runs on the host (privacy: patient data never leaves the machine).
     base-url: http://localhost:11434
-    # Instruct model. qwen2.5:7b handles Turkish output far more reliably than a 3B model and
-    # fits comfortably on a 16GB M1. Swap for any local model without touching code.
-    model: qwen2.5:7b
+    # Instruct model. gemma2:9b gives the cleanest Turkish and the most reliable status labelling
+    # of the local options that fit a 16GB M1. Swap for any local model without touching code.
+    model: gemma2:9b
     # Cap the wait so a slow/hung LLM never blocks the request indefinitely.
     # A 7B model is slower per call, so allow a little more headroom.
     timeout: 60s
