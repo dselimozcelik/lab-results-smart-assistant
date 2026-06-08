@@ -9,4 +9,12 @@ describe("StatusBadge", () => {
     const badge = screen.getByText("Kritik");
     expect(badge).toHaveClass("badge--critical");
   });
+
+  it("renders a redundant icon alongside the label for each status", () => {
+    const { container } = render(<StatusBadge status="LOW" />);
+
+    // The glyph carries meaning beyond colour; assert it is actually drawn.
+    expect(container.querySelector(".badge-icon")).toBeInTheDocument();
+    expect(screen.getByText("Düşük")).toBeInTheDocument();
+  });
 });
