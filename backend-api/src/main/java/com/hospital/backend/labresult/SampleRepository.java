@@ -64,6 +64,11 @@ public interface SampleRepository extends JpaRepository<Sample, Long> {
 
     Optional<Sample> findBySampleId(String sampleId);
 
+    // AI prompt generation happens after this repository call returns, so load the panel eagerly
+    // and avoid keeping a database transaction open while waiting for the external LLM.
+    @Query("SELECT DISTINCT s FROM Sample s LEFT JOIN FETCH s.tests WHERE s.sampleId = :sampleId")
+    Optional<Sample> findBySampleIdWithTests(@Param("sampleId") String sampleId);
+
     // Numeric history of one test for one patient, newest first, for the trend sparkline.
     // Only rows with a real value are returned so INVALID/missing readings don't break the line.
     @Query("""

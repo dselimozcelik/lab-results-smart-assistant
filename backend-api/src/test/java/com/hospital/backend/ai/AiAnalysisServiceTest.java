@@ -93,7 +93,7 @@ class AiAnalysisServiceTest {
 
     @Test
     void buildsPanelPromptOverAllTestsAndEnforcesDisclaimer() throws Exception {
-        when(sampleRepository.findBySampleId("S-100")).thenReturn(Optional.of(sampleWithPanel()));
+        when(sampleRepository.findBySampleIdWithTests("S-100")).thenReturn(Optional.of(sampleWithPanel()));
         enqueueModelJson();
 
         AiAnalysis result = service.analyze("S-100");
@@ -107,7 +107,8 @@ class AiAnalysisServiceTest {
         assertThat(body).contains("UYDURMA");
 
         // The disclaimer is set by the backend, not taken from the model output.
-        assertThat(result.getDisclaimer()).contains("not a diagnosis");
+        assertThat(result.getDisclaimer()).contains("Tanı değildir");
+        assertThat(result.getCreatedAt()).isNotNull();
         assertThat(result.getPromptVersion()).isEqualTo("v4");
         verify(aiAnalysisRepository).save(any(AiAnalysis.class));
     }
@@ -115,7 +116,7 @@ class AiAnalysisServiceTest {
     @Test
     void cacheHitSkipsTheLlmCall() {
         Sample s = sampleWithPanel();
-        when(sampleRepository.findBySampleId("S-100")).thenReturn(Optional.of(s));
+        when(sampleRepository.findBySampleIdWithTests("S-100")).thenReturn(Optional.of(s));
         AiAnalysis cached = new AiAnalysis(1L, "test-model", "v4", "cached", "[]", "[]", "disc");
         when(aiAnalysisRepository.findBySampleFkAndModelAndPromptVersion(any(), anyString(), anyString()))
                 .thenReturn(Optional.of(cached));
@@ -129,7 +130,7 @@ class AiAnalysisServiceTest {
 
     @Test
     void flaggedTestsComeFromBackendStatusesNotModelClaims() throws Exception {
-        when(sampleRepository.findBySampleId("S-100")).thenReturn(Optional.of(sampleWithPanel()));
+        when(sampleRepository.findBySampleIdWithTests("S-100")).thenReturn(Optional.of(sampleWithPanel()));
         String modelJson = "{\"summary\":\"Panel reviewed.\","
                 + "\"flaggedTests\":[\"Invented Test\"],"
                 + "\"suggestedFollowups\":[\"  Repeat panel.  \",\"Repeat panel.\",\"\"]}";
@@ -147,7 +148,7 @@ class AiAnalysisServiceTest {
 
     @Test
     void emptySummaryIsRejected() throws Exception {
-        when(sampleRepository.findBySampleId("S-100")).thenReturn(Optional.of(sampleWithPanel()));
+        when(sampleRepository.findBySampleIdWithTests("S-100")).thenReturn(Optional.of(sampleWithPanel()));
         String modelJson = "{\"summary\":\" \",\"flaggedTests\":[],\"suggestedFollowups\":[]}";
         String envelope = "{\"response\":" + new ObjectMapper().writeValueAsString(modelJson) + "}";
         ollamaServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(envelope));
@@ -160,7 +161,7 @@ class AiAnalysisServiceTest {
 
     @Test
     void malformedModelJsonIsRejected() throws Exception {
-        when(sampleRepository.findBySampleId("S-100")).thenReturn(Optional.of(sampleWithPanel()));
+        when(sampleRepository.findBySampleIdWithTests("S-100")).thenReturn(Optional.of(sampleWithPanel()));
         String envelope = "{\"response\":" + new ObjectMapper().writeValueAsString("not-json") + "}";
         ollamaServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(envelope));
 
@@ -172,7 +173,7 @@ class AiAnalysisServiceTest {
     @Test
     void timeoutBecomesGracefulAiFailureWithoutSaving() {
         configureService(Duration.ofMillis(100));
-        when(sampleRepository.findBySampleId("S-100")).thenReturn(Optional.of(sampleWithPanel()));
+        when(sampleRepository.findBySampleIdWithTests("S-100")).thenReturn(Optional.of(sampleWithPanel()));
         ollamaServer.enqueue(new MockResponse()
                 .setBody("{}")
                 .setBodyDelay(1, TimeUnit.SECONDS));
@@ -180,6 +181,20 @@ class AiAnalysisServiceTest {
         assertThatThrownBy(() -> service.analyze("S-100"))
                 .isInstanceOf(AiAnalysisException.class)
                 .hasMessageContaining("Language model request failed");
+        verify(aiAnalysisRepository, never()).save(any());
+    }
+
+    @Test
+    void oversizedSummaryIsRejected() throws Exception {
+        when(sampleRepository.findBySampleIdWithTests("S-100")).thenReturn(Optional.of(sampleWithPanel()));
+        String modelJson = "{\"summary\":\"" + "x".repeat(2_001)
+                + "\",\"flaggedTests\":[],\"suggestedFollowups\":[]}";
+        String envelope = "{\"response\":" + new ObjectMapper().writeValueAsString(modelJson) + "}";
+        ollamaServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setBody(envelope));
+
+        assertThatThrownBy(() -> service.analyze("S-100"))
+                .isInstanceOf(AiAnalysisException.class)
+                .hasMessageContaining("oversized summary");
         verify(aiAnalysisRepository, never()).save(any());
     }
 }

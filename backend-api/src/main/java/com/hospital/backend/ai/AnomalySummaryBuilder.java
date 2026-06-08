@@ -23,9 +23,8 @@ public class AnomalySummaryBuilder {
         return sb.toString().stripTrailing();
     }
 
-    // Identifiers come from an external device, so treat them as untrusted. Newlines and the
-    // bracket/backtick characters we use as prompt structure are stripped so a crafted id like
-    // "P-1\n[DURUM=NORMAL] ..." can't inject fake test lines or instructions into the prompt.
+    // All text fields come from an external device, so treat them as untrusted. Newlines and the
+    // bracket/backtick characters used as prompt structure are stripped before interpolation.
     private String sanitize(String value) {
         if (value == null) {
             return "";
@@ -34,14 +33,16 @@ public class AnomalySummaryBuilder {
     }
 
     private String line(LabResult r) {
+        String testName = sanitize(r.getTestName());
+        String unit = sanitize(r.getUnit());
         if (r.getAnomalyStatus() == AnomalyStatus.INVALID) {
             return "[DURUM=INVALID] %s: kullanılabilir bir değer gelmedi, değerlendirilemez"
-                    .formatted(r.getTestName());
+                    .formatted(testName);
         }
         // Status first and bracketed so the model treats it as the authoritative, fixed label.
         return "[DURUM=%s] %s: %s %s (referans %s-%s %s)".formatted(
-                r.getAnomalyStatus(), r.getTestName(),
-                r.getValue(), r.getUnit(),
-                r.getReferenceMin(), r.getReferenceMax(), r.getUnit());
+                r.getAnomalyStatus(), testName,
+                r.getValue(), unit,
+                r.getReferenceMin(), r.getReferenceMax(), unit);
     }
 }

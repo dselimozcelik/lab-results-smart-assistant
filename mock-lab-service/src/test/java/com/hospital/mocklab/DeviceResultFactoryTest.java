@@ -36,6 +36,17 @@ class DeviceResultFactoryTest {
     }
 
     @Test
+    void randomSampleIdsRemainUniqueAcrossServiceRestarts() {
+        DeviceResultFactory firstRun = new DeviceResultFactory("run-a");
+        DeviceResultFactory secondRun = new DeviceResultFactory("run-b");
+
+        String firstId = firstRun.randomBatch(new Random(7)).get(0).sampleId();
+        String secondId = secondRun.randomBatch(new Random(7)).get(0).sampleId();
+
+        assertThat(firstId).isNotEqualTo(secondId);
+    }
+
+    @Test
     void duplicateScenarioRepeatsTheSameSampleId() {
         List<SampleBatchDto> batch = factory.batchFor(Scenario.DUPLICATE);
         assertThat(batch).hasSize(2);

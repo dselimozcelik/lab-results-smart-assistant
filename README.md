@@ -203,8 +203,8 @@ GET /api/device-results/batch?scenario=
 ## Test ve Kalite
 
 ```bash
-cd backend-api && ./mvnw test                                  # 43 test
-cd mock-lab-service && ./mvnw test                             # 9 test
+cd backend-api && ./mvnw test                                  # 46 test
+cd mock-lab-service && ./mvnw test                             # 10 test
 cd frontend && npm ci && npm test && npm run lint && npm run build   # 14 test
 ```
 
@@ -212,6 +212,8 @@ cd frontend && npm ci && npm test && npm run lint && npm run build   # 14 test
   unique constraint'ler ve PostgreSQL'e özgü sorgular H2 gibi başka bir motorda taklit edilmez.
 - Mock cihaz ve Ollama testlerde **MockWebServer ile izole edilir**; test paketi gerçek Ollama veya
   çalışan mock servis **gerektirmez**.
+- AI isteğinde nginx timeout'u backend'in Ollama timeout'undan daha uzundur; model erişilemezse
+  proxy'nin ham `504` cevabı yerine backend'in kontrollü hata cevabı UI'a ulaşır.
 - Frontend testleri kullanıcı davranışını (login, kritik badge, arama, AI durumları) Testing Library
   ile doğrular.
 - Her push ve PR'da [GitHub Actions CI](https://github.com/dselimozcelik/lab-results-smart-assistant/actions/workflows/ci.yml)

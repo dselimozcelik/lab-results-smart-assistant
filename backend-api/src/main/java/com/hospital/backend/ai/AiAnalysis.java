@@ -40,7 +40,7 @@ public class AiAnalysis {
     @Column(nullable = false)
     private String disclaimer;
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     protected AiAnalysis() {
@@ -56,6 +56,7 @@ public class AiAnalysis {
         this.flaggedTests = flaggedTests;
         this.suggestedFollowups = suggestedFollowups;
         this.disclaimer = disclaimer;
+        this.createdAt = Instant.now();
     }
 
     public Long getId() {

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 // Builds device batches of TUBES. A real analyser processes a tube and reports a PANEL: one
@@ -20,8 +21,17 @@ public class DeviceResultFactory {
 
     private static final Instant REF = Instant.parse("2026-06-05T12:00:00Z");
 
-    // Monotonic counter guarantees unique sampleIds across the whole run (no accidental dupes).
+    // A boot-specific prefix plus a counter prevents accidental duplicates after service restarts.
+    private final String runId;
     private final AtomicLong seq = new AtomicLong(1);
+
+    public DeviceResultFactory() {
+        this(UUID.randomUUID().toString().substring(0, 8));
+    }
+
+    DeviceResultFactory(String runId) {
+        this.runId = runId;
+    }
 
     public List<SampleBatchDto> batchFor(Scenario scenario) {
         return switch (scenario) {
@@ -61,7 +71,7 @@ public class DeviceResultFactory {
     }
 
     private SampleBatchDto randomTube(Random rnd) {
-        String sampleId = "S-" + seq.getAndIncrement();
+        String sampleId = "S-" + runId + "-" + seq.getAndIncrement();
         String patientId = "P-" + (100 + rnd.nextInt(900));
         Instant now = Instant.now();
 

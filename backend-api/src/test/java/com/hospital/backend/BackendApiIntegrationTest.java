@@ -150,9 +150,8 @@ class BackendApiIntegrationTest {
                 .contains("\"outcome\":\"PROCESSED\"");
     }
 
-    // Guards against a readOnly-transaction regression: analyze() reads the tube's lazy collection
-    // AND persists the cached analysis, so it must run in a read-write transaction. A readOnly one
-    // would make Postgres reject the INSERT with a 500. Also verifies the second call is a cache hit.
+    // Verifies the eagerly loaded panel can be analysed and persisted without a service-level
+    // transaction around the external LLM call. The second call must be served from the DB cache.
     @Test
     void aiAnalysisPersistsToRealPostgresAndCachesTheResult() throws Exception {
         SampleBatchDto tube = new SampleBatchDto(
@@ -170,7 +169,8 @@ class BackendApiIntegrationTest {
         mockMvc.perform(post("/api/samples/S-AI/ai-analysis").header("Authorization", bearer))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.summary").value("Panel genel olarak normaldir."))
-                .andExpect(jsonPath("$.disclaimer").isNotEmpty());
+                .andExpect(jsonPath("$.disclaimer").isNotEmpty())
+                .andExpect(jsonPath("$.createdAt").isNotEmpty());
 
         assertThat(aiAnalysisRepository.findAll()).hasSize(1);
 

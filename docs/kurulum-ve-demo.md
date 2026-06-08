@@ -343,11 +343,11 @@ Korumalı bir endpoint'i denemek için:
 ## 9. Testleri çalıştırma
 
 ```bash
-# Backend — 43 test. Integration testleri Testcontainers ile gerçek PostgreSQL başlatır,
+# Backend — 46 test. Integration testleri Testcontainers ile gerçek PostgreSQL başlatır,
 # bu yüzden Docker çalışmalıdır. Gerçek Ollama veya mock servis GEREKMEZ (MockWebServer).
 cd backend-api && ./mvnw test
 
-# Mock servis — 9 test
+# Mock servis — 10 test
 cd mock-lab-service && ./mvnw test
 
 # Frontend — 14 test + lint + production build + güvenlik denetimi

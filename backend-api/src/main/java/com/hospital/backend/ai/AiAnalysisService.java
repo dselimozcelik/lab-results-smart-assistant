@@ -10,7 +10,6 @@ import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -25,8 +24,11 @@ public class AiAnalysisService {
     // The disclaimer is enforced by the backend, NOT produced by the model: a doctor must always
     // see this exact wording, so we never let a non-deterministic model phrase (or drop) it.
     private static final String DISCLAIMER =
-            "This is a preliminary, AI-assisted analysis to support a doctor. "
-            + "It is not a diagnosis and must be reviewed by a qualified clinician.";
+            "Bu, doktora destek olmak amacıyla üretilmiş yapay zeka destekli bir ön değerlendirmedir. "
+            + "Tanı değildir ve yetkin bir klinisyen tarafından gözden geçirilmelidir.";
+    private static final int MAX_SUMMARY_LENGTH = 2_000;
+    private static final int MAX_FOLLOWUP_COUNT = 5;
+    private static final int MAX_FOLLOWUP_LENGTH = 500;
 
     private final SampleRepository sampleRepository;
     private final AiAnalysisRepository aiAnalysisRepository;
@@ -52,12 +54,10 @@ public class AiAnalysisService {
         this.objectMapper = objectMapper;
     }
 
-    // One transaction so the tube's lazy test collection stays loadable while the summary is built,
-    // and the cached analysis is persisted at the end. Not readOnly: this method writes (saves the
-    // analysis), so a readOnly transaction would reject the INSERT.
-    @Transactional
+    // Repository calls use their own short transactions. The panel is fetched eagerly, so the
+    // potentially slow external LLM call never holds a database transaction or connection open.
     public AiAnalysis analyze(String sampleId) {
-        Sample sample = sampleRepository.findBySampleId(sampleId)
+        Sample sample = sampleRepository.findBySampleIdWithTests(sampleId)
                 .orElseThrow(() -> new EntityNotFoundException("Sample not found: " + sampleId));
 
         // Cache hit: same tube + model + prompt version already analysed.
@@ -107,8 +107,12 @@ public class AiAnalysisService {
         if (content.summary() == null || content.summary().isBlank()) {
             throw new AiAnalysisException("Language model returned an empty summary", null);
         }
+        String summary = content.summary().trim();
+        if (summary.length() > MAX_SUMMARY_LENGTH) {
+            throw new AiAnalysisException("Language model returned an oversized summary", null);
+        }
         return new ModelContent(
-                content.summary().trim(),
+                summary,
                 List.of(),
                 cleanList(content.suggestedFollowups()));
     }
@@ -120,7 +124,9 @@ public class AiAnalysisService {
         return values.stream()
                 .filter(value -> value != null && !value.isBlank())
                 .map(String::trim)
+                .filter(value -> value.length() <= MAX_FOLLOWUP_LENGTH)
                 .distinct()
+                .limit(MAX_FOLLOWUP_COUNT)
                 .toList();
     }
 

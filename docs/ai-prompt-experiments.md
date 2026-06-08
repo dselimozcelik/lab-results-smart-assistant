@@ -4,7 +4,8 @@ Bu dosya, LLM analiz prompt'unun nasıl şekillendiğini kaydeder: hangi yaklaş
 denendi, ne gibi sorunlar görüldü, neden mevcut sürümde karar kılındı. Amaç, mülakatta
 "prompt'u nasıl tasarladın?" sorusuna somut cevap verebilmek.
 
-Model: `llama3.2:3b` (küçük, yerel, deterministik — temperature 0).
+Güncel model: `gemma2:9b`. İlk deneylerde `llama3.2:3b` ve `qwen2.5:7b` de kullanıldı.
+Tüm karşılaştırmalarda temperature 0 seçildi.
 Önemli ilke: **Backend her testin durumunu (NORMAL/LOW/HIGH/CRITICAL/INVALID) kesin olarak
 hesaplar.** Modelin işi durumu yeniden hesaplamak DEĞİL, verilen durumları düz dille
 açıklamaktır. Disclaimer her zaman backend tarafından zorlanır (modelden gelmez).
@@ -43,7 +44,7 @@ sayısal akıl yürütmede güvenilmez.
 
 ---
 
-## v3 — Türkçe + "açıkla, yeniden hesaplama" + güçlü model (mevcut)
+## v3 — Türkçe + "açıkla, yeniden hesaplama" + güçlü model (ara sürüm)
 
 Üç değişiklik birlikte yapıldı:
 
@@ -62,7 +63,7 @@ karışıyordu ("recommended followups", "usededildi"). qwen2.5:7b (M1/16GB'a ra
 akıcı üretiyor.
 
 **Görülen son sorun ve çözümü:** Model, İngilizce test adlarını Türkçe cümle içinde çevirmeye
-çalışıp bozuyordu — en uç örnek "White Blood Cell" → **"beygir hücre sayımı"** (😀). Prompt'a
+çalışıp bozuyordu — en uç örnek "White Blood Cell" → **"beygir hücre sayımı"**. Prompt'a
 "test adlarını ASLA çevirme, birebir İngilizce yaz" kuralı + doğru/yanlış örnek eklendi.
 
 **Sonuç (qwen2.5:7b + v3, gerçek çıktılar):**
@@ -135,3 +136,8 @@ Bu yüzden ollama timeout 60s'te tutuldu.
 
 **Karar:** v4 + gemma2:9b. Yorum derinliği ile güvenlik korkulukları arasında doğru denge bu
 sürümde sağlandı.
+
+**Güvenlik sınırı:** Prompt kuralları ve JSON doğrulaması model davranışını azaltır fakat serbest
+metnin klinik doğruluğunu garanti etmez. Backend; deterministic durumları, `flaggedTests` listesini,
+çıktı boyutlarını ve disclaimer'ı zorlar. Serbest özet ve takip önerileri doktor tarafından
+incelenmesi gereken güvenilmeyen model çıktısıdır.
