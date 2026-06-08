@@ -1,4 +1,5 @@
 import type { AnomalyStatus } from "../api/labResults";
+import { STATUS_LABELS } from "../utils/labUtils";
 import "./PatientFilters.css";
 
 export type PatientFilterValues = {
@@ -17,13 +18,10 @@ type Props = {
   onClear: () => void;
 };
 
-const STATUS_OPTIONS: Array<{ value: AnomalyStatus; label: string }> = [
-  { value: "NORMAL", label: "Normal" },
-  { value: "LOW", label: "Düşük" },
-  { value: "HIGH", label: "Yüksek" },
-  { value: "CRITICAL", label: "Kritik" },
-  { value: "INVALID", label: "Geçersiz" },
-];
+// Derived from the shared labels so the option list can never drift from the badge wording.
+const STATUS_OPTIONS = (Object.entries(STATUS_LABELS) as Array<[AnomalyStatus, string]>).map(
+  ([value, label]) => ({ value, label }),
+);
 
 export function PatientFilters({
   values,

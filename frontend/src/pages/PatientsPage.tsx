@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { getPatients } from "../api/patients";
 import type { PatientQuery } from "../api/patients";
+import { usePatients } from "../hooks/usePatientQueries";
+import { formatDateTime, STATUS_LABELS } from "../utils/labUtils";
 import { PatientFilters } from "../components/PatientFilters";
 import type { PatientFilterValues } from "../components/PatientFilters";
 import { PatientSearchBar } from "../components/PatientSearchBar";
@@ -12,17 +12,6 @@ import "./ResultsPage.css";
 
 const DEFAULT_PAGE_SIZE = 20;
 const EMPTY_FILTERS: PatientFilterValues = { testCode: "", status: "", from: "", to: "" };
-const STATUS_LABELS = {
-  NORMAL: "Normal",
-  LOW: "Düşük",
-  HIGH: "Yüksek",
-  CRITICAL: "Kritik",
-  INVALID: "Geçersiz",
-} as const;
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString("tr-TR");
-}
 
 function startOfDay(date: string): string | undefined {
   return date ? new Date(`${date}T00:00:00`).toISOString() : undefined;
@@ -51,12 +40,7 @@ export function PatientsPage() {
     size: pageSize,
   };
 
-  const { data, isPending, isFetching, isError, error, refetch } = useQuery({
-    queryKey: ["patients", query],
-    queryFn: () => getPatients(query),
-    placeholderData: keepPreviousData,
-    refetchInterval: 10_000,
-  });
+  const { data, isPending, isFetching, isError, error, refetch } = usePatients(query);
 
   function changePageSize(next: number) {
     setPageSize(next);
@@ -198,7 +182,7 @@ export function PatientsPage() {
                       <td className="cell-value">{p.testCount}</td>
                       <td className="cell-value cell-muted">{p.sampleCount}</td>
                       <td><StatusBadge status={p.worstStatus} /></td>
-                      <td className="cell-muted">{formatDate(p.lastMeasuredAt)}</td>
+                      <td className="cell-muted">{formatDateTime(p.lastMeasuredAt)}</td>
                       <td className="row-arrow" aria-hidden="true">›</td>
                     </tr>
                   ))}

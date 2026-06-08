@@ -1,8 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
-import { getPatient } from "../api/patients";
 import type { SampleGroup } from "../api/patients";
-import type { AnomalyStatus, LabResult } from "../api/labResults";
+import { usePatient } from "../hooks/usePatientQueries";
+import { abnormalFirst, formatDateTime, isAbnormal } from "../utils/labUtils";
 import { StatusBadge } from "../components/StatusBadge";
 import { ReferenceRangeBar } from "../components/ReferenceRangeBar";
 import { TestTrendSparkline } from "../components/TestTrendSparkline";
@@ -10,30 +9,10 @@ import { AiAnalysisPanel } from "../components/AiAnalysisPanel";
 import { Skeleton } from "../components/Skeleton";
 import "./PatientDetailPage.css";
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString("tr-TR");
-}
-
-// Most severe first so a doctor sees problems at the top of each tube.
-const SEVERITY: Record<AnomalyStatus, number> = {
-  CRITICAL: 4, HIGH: 3, LOW: 3, INVALID: 2, NORMAL: 1,
-};
-
-function abnormalFirst(tests: LabResult[]): LabResult[] {
-  return [...tests].sort((a, b) => SEVERITY[b.anomalyStatus] - SEVERITY[a.anomalyStatus]);
-}
-
-function isAbnormal(status: AnomalyStatus): boolean {
-  return status !== "NORMAL";
-}
-
 export function PatientDetailPage() {
   const { patientId } = useParams();
 
-  const { data, isPending, isError, error, refetch } = useQuery({
-    queryKey: ["patient", patientId],
-    queryFn: () => getPatient(patientId!),
-  });
+  const { data, isPending, isError, error, refetch } = usePatient(patientId);
 
   if (isPending) {
     return (
@@ -92,7 +71,7 @@ function TubeCard({ patientId, sample }: { patientId: string; sample: SampleGrou
       <div className="tube-head">
         <div>
           <h2 className="tube-title">Tüp {sample.sampleId}</h2>
-          <p className="tube-meta">{formatDate(sample.measuredAt)} · {sample.deviceId}</p>
+          <p className="tube-meta">{formatDateTime(sample.measuredAt)} · {sample.deviceId}</p>
         </div>
         <StatusBadge status={sample.worstStatus} />
       </div>

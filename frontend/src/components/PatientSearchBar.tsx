@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getPatientSuggestions } from "../api/patients";
+import { usePatientSuggestions } from "../hooks/usePatientQueries";
 import "./PatientSearchBar.css";
 
 type Props = {
@@ -25,12 +24,7 @@ export function PatientSearchBar({ value, onChange, onApply, onClear, isApplying
     return () => window.clearTimeout(timeout);
   }, [value]);
 
-  const suggestions = useQuery({
-    queryKey: ["patientSuggestions", suggestionQuery.toLocaleLowerCase("tr-TR")],
-    queryFn: () => getPatientSuggestions(suggestionQuery),
-    enabled: suggestionsOpen && suggestionQuery.length >= 2,
-    staleTime: 60_000,
-  });
+  const suggestions = usePatientSuggestions(suggestionQuery, suggestionsOpen);
 
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
