@@ -179,6 +179,8 @@ cd frontend && npm ci && npm test && npm run lint && npm run build
 - Testler gerçek Ollama veya çalışan mock servis gerektirmez.
 - Her push ve pull request'te [GitHub Actions CI](https://github.com/dselimozcelik/lab-results-smart-assistant/actions/workflows/ci.yml)
   çalışır.
+- Swagger UI, JWT bearer yetkilendirmesini ve paginated endpoint'ler için `page/size/sort`
+  parametrelerini çalıştırılabilir biçimde sunar.
 
 Güncel test sayıları, senaryolar ve son doğrulama sonuçları:
 [Test ve kanıt raporu](docs/testing-and-evidence.md).

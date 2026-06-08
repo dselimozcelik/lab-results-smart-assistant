@@ -251,6 +251,18 @@ OpenAPI JSON:
 
 Swagger dokümantasyonu public'tir; iş endpoint'leri JWT olmadan çağrıldığında `401` döner.
 
+Korumalı endpoint'leri Swagger üzerinden denemek için:
+
+1. `POST /api/auth/login` endpoint'inden token alın.
+2. Sağ üstteki `Authorize` butonuna basın.
+3. Token değerini girip yetkilendirmeyi uygulayın.
+4. Örneğin `GET /api/audit-logs` için `Try it out` seçin; `page`, `size` ve `sort`
+   parametrelerini ayrı alanlar olarak doldurup çağrıyı çalıştırın.
+
+Beklenen davranış: cevap `200` olur ve her polling cycle için fetched/valid/invalid/duplicate
+sayıları ile açıklama alanı döner. [Audit cevap ekranı](screenshots/07-audit-log-response.png) bu
+akışın çalışan sistemden alınmış kanıtıdır.
+
 ## 9. Yerel geliştirme yöntemi
 
 Yalnızca PostgreSQL'i Docker'da başlatın:
