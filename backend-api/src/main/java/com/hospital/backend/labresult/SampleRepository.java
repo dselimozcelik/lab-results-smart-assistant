@@ -1,6 +1,7 @@
 package com.hospital.backend.labresult;
 
 import com.hospital.backend.patient.PatientSummaryRow;
+import com.hospital.backend.patient.TestHistoryPoint;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -62,4 +63,19 @@ public interface SampleRepository extends JpaRepository<Sample, Long> {
     List<String> findPatientIdSuggestions(@Param("prefix") String prefix, Pageable pageable);
 
     Optional<Sample> findBySampleId(String sampleId);
+
+    // Numeric history of one test for one patient, newest first, for the trend sparkline.
+    // Only rows with a real value are returned so INVALID/missing readings don't break the line.
+    @Query("""
+            SELECT new com.hospital.backend.patient.TestHistoryPoint(s.measuredAt, r.value)
+            FROM LabResult r JOIN r.sample s
+            WHERE s.patientId = :patientId
+              AND r.testCode = :testCode
+              AND r.value IS NOT NULL
+            ORDER BY s.measuredAt DESC
+            """)
+    List<TestHistoryPoint> findTestHistory(
+            @Param("patientId") String patientId,
+            @Param("testCode") String testCode,
+            Pageable pageable);
 }

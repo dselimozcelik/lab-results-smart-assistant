@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +48,19 @@ public class PatientService {
                         row.getSampleCount(),
                         fromSeverity(row.getWorstSeverity(), row.getHighCount()),
                         row.getLastMeasuredAt()));
+    }
+
+    private static final int HISTORY_LIMIT = 12;
+
+    @Transactional(readOnly = true)
+    public List<TestHistoryPoint> getTestHistory(String patientId, String testCode) {
+        // The query returns newest-first (so the limit keeps the most recent); a sparkline reads
+        // left-to-right in time, so reverse to chronological order before returning.
+        List<TestHistoryPoint> recent = sampleRepository.findTestHistory(
+                patientId, testCode, PageRequest.of(0, HISTORY_LIMIT));
+        List<TestHistoryPoint> chronological = new ArrayList<>(recent);
+        Collections.reverse(chronological);
+        return chronological;
     }
 
     @Transactional(readOnly = true)

@@ -49,4 +49,12 @@ public class PatientController {
     public PatientDetailResponse getOne(@PathVariable String patientId) {
         return patientService.getPatient(patientId);
     }
+
+    // Numeric trend of one test for one patient (oldest to newest), for the detail-view sparkline.
+    @GetMapping("/{patientId}/tests/{testCode}/history")
+    public List<TestHistoryPoint> testHistory(
+            @PathVariable String patientId,
+            @PathVariable String testCode) {
+        return patientService.getTestHistory(patientId, testCode);
+    }
 }
