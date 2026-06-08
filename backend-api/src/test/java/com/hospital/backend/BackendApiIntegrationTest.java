@@ -110,7 +110,10 @@ class BackendApiIntegrationTest {
                 .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.type").value("http"))
                 .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme").value("bearer"))
                 .andExpect(jsonPath("$.security[0].bearerAuth").isArray())
-                .andExpect(jsonPath("$.paths['/api/auth/login'].post.security").isEmpty());
+                .andExpect(jsonPath("$.paths['/api/auth/login'].post.security").isEmpty())
+                .andExpect(jsonPath("$.paths['/api/audit-logs'].get.parameters[?(@.name == 'page')]").isNotEmpty())
+                .andExpect(jsonPath("$.paths['/api/audit-logs'].get.parameters[?(@.name == 'size')]").isNotEmpty())
+                .andExpect(jsonPath("$.paths['/api/audit-logs'].get.parameters[?(@.name == 'sort')]").isNotEmpty());
     }
 
     @Test

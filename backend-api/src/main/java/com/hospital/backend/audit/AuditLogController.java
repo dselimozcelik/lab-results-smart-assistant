@@ -1,6 +1,7 @@
 package com.hospital.backend.audit;
 
 import com.hospital.backend.common.PageResponse;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -20,6 +21,7 @@ public class AuditLogController {
 
     @GetMapping
     public PageResponse<PollingAuditLogResponse> list(
+            @ParameterObject
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return PageResponse.from(repository.findAll(pageable).map(PollingAuditLogResponse::from));
     }
