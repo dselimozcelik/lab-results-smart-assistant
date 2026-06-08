@@ -33,7 +33,7 @@ lab:
     expiry-minutes: 60
   anomaly:
     # How far beyond a reference bound (as a fraction of the range width) is CRITICAL.
-    # Documented heuristic, not a clinical panic value (see CLAUDE.md business rules).
+    # Documented heuristic, not a clinical panic value; production would use per-test panic values.
     critical-factor: 0.5
   polling:
     mock-base-url: http://localhost:8081

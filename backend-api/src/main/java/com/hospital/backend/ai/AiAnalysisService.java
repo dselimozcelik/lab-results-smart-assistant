@@ -22,7 +22,8 @@ public class AiAnalysisService {
 
     private static final Logger log = LoggerFactory.getLogger(AiAnalysisService.class);
 
-    // The disclaimer is enforced by the backend, NOT produced by the model (CLAUDE.md §7).
+    // The disclaimer is enforced by the backend, NOT produced by the model: a doctor must always
+    // see this exact wording, so we never let a non-deterministic model phrase (or drop) it.
     private static final String DISCLAIMER =
             "This is a preliminary, AI-assisted analysis to support a doctor. "
             + "It is not a diagnosis and must be reviewed by a qualified clinician.";
@@ -51,8 +52,10 @@ public class AiAnalysisService {
         this.objectMapper = objectMapper;
     }
 
-    // Transactional + readOnly so the tube's lazy test collection can be read while building the summary.
-    @Transactional
+    // readOnly: this method only reads the tube and its lazy test collection (and writes the new
+    // analysis through the repository's own transaction); declaring it documents intent and keeps
+    // the lazy-load session open while the summary is built.
+    @Transactional(readOnly = true)
     public AiAnalysis analyze(String sampleId) {
         Sample sample = sampleRepository.findBySampleId(sampleId)
                 .orElseThrow(() -> new EntityNotFoundException("Sample not found: " + sampleId));
@@ -90,9 +93,14 @@ public class AiAnalysisService {
         try {
             return objectMapper.readValue(rawJson, ModelContent.class);
         } catch (JsonProcessingException e) {
-            log.warn("Could not parse model output as JSON: {}", rawJson);
+            // Truncate: model output can be long and may echo patient values; we only need a hint.
+            log.warn("Could not parse model output as JSON: {}", truncate(rawJson));
             throw new AiAnalysisException("Language model returned malformed output", e);
         }
+    }
+
+    private String truncate(String value) {
+        return value.length() <= 300 ? value : value.substring(0, 300) + "…";
     }
 
     private ModelContent validate(ModelContent content) {
