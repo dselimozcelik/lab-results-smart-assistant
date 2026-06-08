@@ -1,251 +1,244 @@
 # Lab Results Smart Assistant
 
-Bir laboratuvar cihazından gelen test sonuçlarını periyodik olarak alan, doğrulayan, saklayan,
-anormallikleri belirleyen ve doktora yerel LLM destekli ön değerlendirme sunan full-stack teknik
-değerlendirme projesidir.
+Bir laboratuvar cihazını periyodik olarak dinleyen; gelen test sonuçlarını doğrulayan, saklayan ve
+anomalilerini sınıflandıran; doktora yerel bir LLM ile **ön değerlendirme** sunan full-stack bir
+sistem. Doktorlar React arayüzünden giriş yapıp hastalarını, tüplerini ve test panellerini inceler.
 
-Bu projeyi yalnızca “çalışan bir demo” olarak değil; bozuk veri, duplicate mesaj, cihaz kesintisi,
-LLM timeout'u ve hatalı model çıktısı gibi durumlarda davranışı açıklanabilir küçük bir sistem olarak
-tasarladım. Sistemde gerçek hasta verisi yoktur. AI çıktısı tanı değildir.
+Bu projeyi "çalışan bir demo" olarak değil, **hata yollarının da görünür ve test edilebilir olduğu**
+küçük ama sağlam bir sistem olarak tasarladım: bozuk veri, duplicate mesaj, cihaz kesintisi, LLM
+timeout'u ve hatalı model çıktısı gibi durumlarda sistemin ne yaptığı dokümante ve otomatik testlerle
+kanıtlanmıştır.
+
+> Bu bir teknik değerlendirme projesidir. **Gerçek hasta verisi yoktur; tüm veriler mock/demodur.**
+> AI çıktısı bir tanı değil, doktora yönelik kontrollü bir ön değerlendirmedir.
 
 [![CI](https://github.com/dselimozcelik/lab-results-smart-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/dselimozcelik/lab-results-smart-assistant/actions/workflows/ci.yml)
 
-## 5 Dakikada Değerlendirme
+---
 
-### 1. Sistemi çalıştırın
+## İçindekiler
 
-Gereksinimler: Docker ve AI analizi için host makinede Ollama.
+- [5 Dakikada Çalıştır](#5-dakikada-çalıştır)
+- [Mimari](#mimari)
+- [Domain Modeli: Hasta → Tüp → Test](#domain-modeli-hasta--tüp--test)
+- [Öne Çıkan Mühendislik Kararları](#öne-çıkan-mühendislik-kararları)
+- [İş Kuralları](#i̇ş-kuralları)
+- [Bilinçli Olarak Yapılmayanlar](#bilinçli-olarak-yapılmayanlar)
+- [API Yüzeyi](#api-yüzeyi)
+- [Test ve Kalite](#test-ve-kalite)
+- [Teknoloji Seçimleri](#teknoloji-seçimleri)
+- [Doküman İndeksi](#doküman-i̇ndeksi)
+
+---
+
+## 5 Dakikada Çalıştır
+
+**Gereksinim:** Docker + host makinede Ollama. AI ön analizi sistemin çekirdek özelliklerinden
+biridir; modeli önceden indirmek demoyu eksiksiz gösterir.
 
 ```bash
+# AI ön analizi modeli (sistemin temel bir parçası)
 ollama pull gemma2:9b
+
+# Tüm sistemi tek komutla ayağa kaldır
 docker compose -f docker-compose.full.yml up --build
 ```
 
 Backend hazır olduğunda:
 
 ```bash
-curl http://localhost:8080/actuator/health
+curl http://localhost:8080/actuator/health   # {"status":"UP"}
 ```
 
-Uygulama: [http://localhost:5173](http://localhost:5173)
+Arayüz: **http://localhost:5173**
 
 ```text
 Kullanıcı adı: doctor
-Şifre: Doctor123!
+Şifre:         Doctor123!
 ```
 
-### 2. Temel akışı inceleyin
+> Docker, dört bileşeni (PostgreSQL, mock cihaz, backend, frontend) tek komutla ayağa kaldırır;
+> kuran kişinin makinesine Java, Node veya PostgreSQL kurması gerekmez. Adım adım kurulum, lokal
+> geliştirme yöntemi ve sorun giderme için → [Kurulum ve Demo Kılavuzu](docs/kurulum-ve-demo.md).
 
-1. Login olun ve hasta listesini açın.
-2. Arama alanına küçük harfle `p-` yazıp önerileri gözlemleyin.
-3. Kritik bir hastayı açıp tüp içindeki testleri ve referans aralıklarını inceleyin.
-4. Bir tüp için `AI analizi al` butonunu kullanın.
-5. Swagger ve audit log üzerinden backend davranışını inceleyin.
-
-### 3. Teknik kanıtları inceleyin
-
-| İnceleme amacı | Belge |
-|---|---|
-| Mimari ve kararların ayrıntılı savunması | [Teknik tasarım](docs/technical-design.md) |
-| Case maddelerinin nasıl karşılandığı | [Gereksinim karşılama matrisi](docs/requirements-traceability.md) |
-| Test stratejisi ve failure-mode kanıtları | [Test ve kanıt raporu](docs/testing-and-evidence.md) |
-| Tekrarlanabilir kurulum ve demo | [Demo ve kullanım kılavuzu](docs/demo-guide.md) |
-| AI araçlarının kullanımı ve benim rolüm | [AI destekli geliştirme yaklaşımı](docs/ai-assisted-development.md) |
-| Teslim ekranları | [Görsel kanıt paketi](#görsel-kanıt-paketi) |
-
-## Gereksinimlerin Karşılanma Özeti
-
-| Case beklentisi | Uygulama |
-|---|---|
-| Lab cihazı mock servisi | Ayrı Spring Boot servis; normal ve 8 kontrollü senaryo |
-| Periyodik veri çekme | `@Scheduled(fixedDelay)` kullanan backend poller |
-| Validation ve saklama | Tüp/test seviyesinde validation, PostgreSQL, Flyway |
-| REST API | JWT korumalı hasta, detay, AI analizi ve audit endpoint'leri |
-| AI ön analizi | Host üzerinde Ollama, kontrollü prompt, JSON doğrulama ve cache |
-| Loglama | Uygulama logları ve kalıcı polling audit kayıtları |
-| Doktor frontend'i | React, login, hasta arama/filtreleme, detay ve AI durumları |
-| Kolay çalıştırma | Full-stack Docker Compose ve yerel geliştirme yöntemi |
-| Test ve kalite | Backend, mock ve frontend testleri; GitHub Actions CI |
-
-Maddenin kod ve kanıt bağlantıları için
-[gereksinim karşılama matrisine](docs/requirements-traceability.md) bakılabilir.
+---
 
 ## Mimari
 
+Sistem dört bağımsız parçadan oluşur. Her biri tek bir sorumluluğa sahiptir ve ayrı ayrı
+ölçeklenebilir/çalıştırılabilir.
+
 ```mermaid
 flowchart LR
-    D["Mock Lab Service<br/>Spring Boot :8081"] -->|"JSON batch"| B["Backend API<br/>Spring Boot :8080"]
-    B -->|"JPA + Flyway"| P[("PostgreSQL")]
-    B -->|"Controlled prompt<br/>WebClient"| O["Ollama<br/>Host :11434"]
-    F["Doctor UI<br/>React + nginx :5173"] -->|"JWT protected REST"| B
+    D["Mock Lab Service<br/>Spring Boot · :8081<br/><i>cihazı simüle eder</i>"]
+    B["Backend API<br/>Spring Boot · :8080<br/><i>polling · validation · REST · LLM</i>"]
+    P[("PostgreSQL<br/>:5432")]
+    O["Ollama<br/>host · :11434<br/><i>yerel LLM</i>"]
+    F["Doctor UI<br/>React + nginx · :5173"]
+
+    D -->|"GET batch (nested panel JSON)"| B
+    B -->|"JPA + Flyway"| P
+    B -.->|"kontrollü prompt · WebClient"| O
+    F -->|"JWT korumalı REST"| B
 ```
 
-Uçtan uca veri akışı:
+> Kesik çizgi (Ollama) bilinçli bir bağımsızlıktır: LLM erişilemese bile sistemin geri kalanı
+> çalışmaya devam eder; AI paneli kontrollü bir hata gösterir.
+
+Uçtan uca veri akışının ayrıntısı ve her adımın hangi kararı kanıtladığı:
+→ [Teknik Tasarım — Uçtan Uca Akış](docs/teknik-tasarim.md#uçtan-uca-veri-akışı).
+
+---
+
+## Domain Modeli: Hasta → Tüp → Test
+
+En kritik tasarım kararı budur. İlk bakışta "her test = bir kayıt" daha basittir; ama gerçek bir lab
+analizöründe **bir tüp (numune) işlenir ve bir panel** üretir: tek hasta, tek `sampleId`, tek ölçüm
+zamanı, birden çok test. Modeli buna göre üç seviyeye ayırdım:
 
 ```text
-Mock cihaz
-  -> fixedDelay poller
-  -> tüp/test validation
-  -> duplicate kontrolü
-  -> deterministic anomaly sınıflandırması
-  -> PostgreSQL + audit kaydı
-  -> JWT korumalı REST API
-  -> doktor arayüzü
-  -> isteğe bağlı kontrollü Ollama analizi
+Patient            (API tarafında hasta bazında rollup)
+  └─ Sample/Tube   (sampleId · patientId · measuredAt · deviceId)
+       └─ LabResult[]   (testCode · value · unit · referans · anomalyStatus)
 ```
 
-Domain modelini `hasta -> tüp/numune -> testler` şeklinde kurdum. Çünkü laboratuvar cihazından aynı
-kan alımına ait birden fazla test birlikte gelir ve AI değerlendirmesi tek değerden çok panel
-bağlamında anlamlıdır. Ayrıntılı gerekçe:
-[Teknik tasarım - Domain modeli](docs/technical-design.md#domain-modeli-hasta---tüp---test).
+Bu modelin getirileri:
+
+- `sampleId` doğal bir **idempotency anahtarı** olur.
+- Aynı tüpteki testler birlikte görüntülenir; **AI tek değeri değil, panel bağlamını** yorumlar.
+- Tüpün metadata'sı güvenilmezse **tüm panel reddedilebilir**; tek test bozuksa yalnızca o test
+  `INVALID` olur — ikisi farklı durumdur ve ayrı ele alınır.
+
+Gerekçenin tamamı ve reddedilen alternatif:
+→ [Teknik Tasarım — Domain Modeli](docs/teknik-tasarim.md#domain-modeli-hasta--tüp--test).
+
+---
 
 ## Öne Çıkan Mühendislik Kararları
 
-### Polling için neden `fixedDelay`?
+Aşağıda her kararın **bir cümlelik özü** var; gerekçesi, alternatifi ve production karşılığı teknik
+tasarım belgesinde.
 
-Bir cycle yavaşladığında yenisinin önceki bitmeden başlamasını istemedim. `fixedDelay`, cihaz veya
-veritabanı yavaşken üst üste binen ingestion işlemlerini engeller. Poll başarısız olursa backend
-çökmez; hata audit'e yazılır ve sonraki cycle tekrar denenir.
+| Karar | Neden (özet) |
+|---|---|
+| **`@Scheduled(fixedDelay)`** ile polling | Yavaş bir cycle bitmeden yenisi başlamasın; üst üste binen ingestion olmasın. |
+| Bozuk test **silinmez, `INVALID` saklanır** | "Test hiç gelmedi" ile "geldi ama kullanılamaz" doktor için farklı bilgidir. |
+| Anomali **LLM'e değil, deterministic Java'ya** | Aynı girdi → aynı sonuç; iş kuralı test edilebilir; model halüsinasyonu durumu değiştiremez. |
+| LLM çıktısına **kısmen** güvenilir | `flaggedTests` ve disclaimer backend'den gelir; model yalnızca verilen gerçekleri yorumlar. |
+| Token **memory'de**, localStorage'da değil | Sağlık verisi demosunda daha dar saldırı yüzeyi tercih edildi. |
+| `open-in-view: false` | Lazy-loading kaynaklı gizli N+1 ve açık-Session anti-pattern'i kapatıldı. |
+| Entity değil **DTO** döndürülür | API sözleşmesi DB şemasından ayrı; iç alanlar sızmaz; `PageResponse` stabil pagination verir. |
 
-### Geçersiz test neden tamamen silinmiyor?
+Detay → [Teknik Tasarım](docs/teknik-tasarim.md).
 
-Tüp güvenilir fakat içindeki tek bir testin değeri/birimi bozuksa testi `INVALID` olarak saklıyorum.
-Böylece doktor “bu test hiç gelmedi” ile “geldi fakat kullanılamaz” durumlarını ayırt edebilir.
-Tüp zamanı güvenilir değilse bütün tüp reddedilir.
-
-### Duplicate nasıl engelleniyor?
-
-`sampleId` veritabanında unique'tir. Servis aynı batch içindeki ve daha önce saklanan duplicate
-tüpleri önceden filtreler; veritabanı constraint'i son güvenlik katmanıdır. Duplicate kayıt
-eklenmez fakat audit log'da görünür.
-
-### Anomaly hesabı neden LLM'e bırakılmıyor?
-
-`NORMAL/LOW/HIGH/CRITICAL/INVALID` durumları deterministic Java koduyla hesaplanır. LLM yalnızca
-backend'in sağladığı gerçekleri yorumlar. Böylece model referans aralığı uyduramaz veya kritik
-durumu yeniden sınıflandıramaz.
-
-### LLM çıktısına neden tamamen güvenilmiyor?
-
-- Prompt yalnızca backend tarafından üretilen panel özetini içerir.
-- `temperature=0` ve JSON çıktı formatı kullanılır.
-- Boş/bozuk çıktı reddedilir.
-- `flaggedTests` modelden değil backend durumlarından üretilir.
-- Disclaimer backend tarafından zorunlu eklenir.
-- Timeout/Ollama kesintisi kontrollü `503` olur; uygulamanın kalanı çalışmaya devam eder.
-- Sonuç `(sample, model, promptVersion)` ile cache'lenir.
-
-### Login güvenliği nasıl ele alındı?
-
-Parola geri çözülebilir encryption ile değil, tek yönlü BCrypt hash olarak saklanır. Login sonrası
-süreli ve imzalı JWT üretilir; JWT şifreli olmadığı için içine hassas veri konmaz. Frontend token'ı
-`localStorage` yerine memory'de tutar ve session bittiğinde query cache'i temizler.
-
-Bu kararların alternatifleri ve production karşılıkları
-[teknik tasarım belgesinde](docs/technical-design.md) açıklanmıştır.
+---
 
 ## İş Kuralları
 
+Anomali durumu beş değerden biridir ve **konfigüre edilebilir** bir eşikle hesaplanır:
+
 | Durum | Kural |
 |---|---|
-| `NORMAL` | Değer referans aralığında |
-| `LOW` | Değer referans minimumunun altında |
-| `HIGH` | Değer referans maksimumunun üstünde |
-| `CRITICAL` | Değer, referans sınırını aralık genişliğinin yapılandırılabilir oranından fazla aşıyor |
-| `INVALID` | Eksik/geçersiz değer, birim veya referans sınırı |
-
-Varsayılan kritik faktör:
+| `NORMAL` | `min ≤ value ≤ max` |
+| `LOW` | `value < min` |
+| `HIGH` | `value > max` |
+| `CRITICAL` | Değer, sınırı aralık genişliğinin `factor` katından fazla aşıyor (varsayılan `factor = 0.5`) |
+| `INVALID` | Sayısal olmayan değer, bilinmeyen birim, `min > max`, eksik sınır, ya da gelecek/çok eski ölçüm |
 
 ```text
-value < min - 0.5 * (max - min)
-veya
-value > max + 0.5 * (max - min)
+CRITICAL eşiği:
+  value < min − factor·(max − min)   veya   value > max + factor·(max − min)
 ```
 
-Bu formül açıklanabilir bir demo heuristiğidir, klinik gerçek değildir. Production ortamında
-test bazlı klinik panic değerleri kullanılmalıdır.
+> Bu, **açıklanabilir bir demo heuristiğidir, klinik gerçek değildir.** Production'da test bazlı,
+> klinisyen onaylı panik değerleri (versiyonlanmış bir config servisinden) kullanılırdı. Eşik
+> `application-*.yml` içindeki `lab.anomaly.critical-factor` ile dışarıdan yönetilir; kodda sabit yoktur.
 
-## Test ve Doğrulama
+---
+
+## Bilinçli Olarak Yapılmayanlar
+
+Bu, single-node bir değerlendirme demosudur; production-ready iddiası taşımaz. Aşağıdakiler
+**bilerek** kapsam dışında bırakıldı — her birinin nedeni ve production karşılığı vardır:
+
+| Konu | Bu kapsamda neden yok? | Production yaklaşımı |
+|---|---|---|
+| Senkron LLM çağrısı | Demo akışını sade ve izlenebilir tutmak | Queue + worker + job-status |
+| Tek global kritik faktör | Açıklanabilir demo kuralı yeterli | Test bazlı klinik panik değerleri |
+| Tek `DOCTOR` rolü | Case ek rol istemiyor | Identity provider + RBAC |
+| Memory'de JWT | Token'ı tarayıcı storage'ında bırakmamak | BFF veya güvenli HttpOnly cookie/session |
+| Tek-instance scheduler | Multi-instance açıkça kapsam dışı | ShedLock / distributed scheduler |
+| HTTP (localhost) | Lokal demo | TLS + secret manager + network policy |
+| WebSocket / realtime | 10 sn'lik yenileme demo için yeterli | Event-driven push |
+| Refresh token rotation, multi-model LLM, Kubernetes | Açıkça kapsam dışı | İhtiyaca göre eklenir |
+
+---
+
+## API Yüzeyi
+
+JWT korumalı uçlar (tamamı `Pageable` listeler `page/size/sort` parametreleriyle):
+
+```text
+POST /api/auth/login                                  → JWT döner
+GET  /api/patients                                    → hasta rollup listesi (filtre + pagination)
+GET  /api/patients/suggestions?query=p-               → case-insensitive autocomplete
+GET  /api/patients/{patientId}                        → hastanın tüpleri + test panelleri
+GET  /api/patients/{patientId}/tests/{testCode}/history → tek testin zaman serisi (trend grafiği)
+POST /api/samples/{sampleId}/ai-analysis              → tüp/panel seviyesinde AI ön analizi
+GET  /api/audit-logs                                  → polling cycle kayıtları
+```
+
+Mock cihaz, hata yollarını test etmek için kontrollü senaryolar sunar:
+
+```text
+GET /api/device-results/batch?scenario=
+    normal | abnormal | critical | duplicate | missing-field | invalid-unit | stale | device-error
+```
+
+İnteraktif dokümantasyon (Swagger UI, JWT bearer ve pageable parametreleri çalıştırılabilir):
+**http://localhost:8080/swagger-ui/index.html**
+
+---
+
+## Test ve Kalite
 
 ```bash
-cd backend-api && ./mvnw test
-cd mock-lab-service && ./mvnw test
-cd frontend && npm ci && npm test && npm run lint && npm run build
+cd backend-api && ./mvnw test                                  # 43 test
+cd mock-lab-service && ./mvnw test                             # 9 test
+cd frontend && npm ci && npm test && npm run lint && npm run build   # 14 test
 ```
 
-- Backend integration testleri gerçek PostgreSQL'i Testcontainers ile başlatır.
-- Device ve Ollama testlerde MockWebServer ile izole edilir.
-- Frontend testleri kullanıcı davranışlarını Testing Library ile doğrular.
-- Testler gerçek Ollama veya çalışan mock servis gerektirmez.
-- Her push ve pull request'te [GitHub Actions CI](https://github.com/dselimozcelik/lab-results-smart-assistant/actions/workflows/ci.yml)
-  çalışır.
-- Swagger UI, JWT bearer yetkilendirmesini ve paginated endpoint'ler için `page/size/sort`
-  parametrelerini çalıştırılabilir biçimde sunar.
+- Backend integration testleri **gerçek PostgreSQL'i Testcontainers ile** başlatır — Flyway,
+  unique constraint'ler ve PostgreSQL'e özgü sorgular H2 gibi başka bir motorda taklit edilmez.
+- Mock cihaz ve Ollama testlerde **MockWebServer ile izole edilir**; test paketi gerçek Ollama veya
+  çalışan mock servis **gerektirmez**.
+- Frontend testleri kullanıcı davranışını (login, kritik badge, arama, AI durumları) Testing Library
+  ile doğrular.
+- Her push ve PR'da [GitHub Actions CI](https://github.com/dselimozcelik/lab-results-smart-assistant/actions/workflows/ci.yml)
+  üç bağımsız job (backend / mock / frontend) çalıştırır.
 
-Güncel test sayıları, senaryolar ve son doğrulama sonuçları:
-[Test ve kanıt raporu](docs/testing-and-evidence.md).
+Test stratejisi, failure-mode matrisi ve her senaryonun hangi testle kanıtlandığı:
+→ [Teknik Tasarım — Test Stratejisi](docs/teknik-tasarim.md#test-stratejisi-ve-failure-mode-matrisi).
 
-## API ve Adresler
+---
 
-| Amaç | Adres |
-|---|---|
-| Frontend | [http://localhost:5173](http://localhost:5173) |
-| Backend health | [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health) |
-| Mock health | [http://localhost:8081/actuator/health](http://localhost:8081/actuator/health) |
-| Swagger UI | [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) |
-| OpenAPI JSON | [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs) |
+## Teknoloji Seçimleri
 
-Temel JWT korumalı endpoint'ler:
-
-```text
-GET  /api/patients
-GET  /api/patients/suggestions?query=P-
-GET  /api/patients/{patientId}
-POST /api/samples/{sampleId}/ai-analysis
-GET  /api/audit-logs
-```
-
-Mock cihaz senaryoları:
-
-```text
-GET /api/device-results/batch?scenario=normal|abnormal|critical|duplicate|missing-field|invalid-unit|stale|device-error
-```
-
-## Bilinçli Sınırlamalar
-
-Bu çözüm bir single-node teknik değerlendirme demosudur; production-ready olduğu iddia edilmemektedir.
-
-| Sınırlama | Neden bu kapsamda yapılmadı? | Production yaklaşımı |
+| Katman | Seçim | Neden bu? |
 |---|---|---|
-| Senkron LLM çağrısı | Demo akışını sade ve doğrudan tutmak | Queue + worker + job status |
-| Tek global kritik faktör | Açıklanabilir demo kuralı yeterli | Test bazlı klinik panic değerleri |
-| Tek `DOCTOR` rolü | Case ek rol istemiyor | Identity provider + RBAC |
-| Memory'de JWT | Token'ı browser storage'da bırakmamak | BFF veya güvenli session/cookie tasarımı |
-| Tek instance polling | Multi-instance açıkça kapsam dışı | ShedLock/distributed scheduler |
-| HTTP localhost | Lokal demo | TLS, secret manager, network policy |
-| WebSocket yok | 10 saniyelik yenileme demo için yeterli | Event/push tabanlı güncelleme |
+| Backend | Spring Boot 3.3.5 · Java 17 | Olgun ekosistem; Security/Data/Validation tek çatı altında. |
+| DB erişimi | Spring Data JPA + **Flyway** | Şema versiyonlu ve tekrarlanabilir; `ddl-auto: validate` ile entity↔şema uyumu boot'ta doğrulanır. |
+| Auth | Spring Security + JWT + BCrypt | Stateless API'ye uygun; BCrypt tek yönlü hash (salt'ı kendinde taşır). |
+| LLM | Ollama + **raw WebClient** | Tek provider/endpoint için Spring AI gibi büyük bir abstraction gereksizdi. |
+| Frontend | React 19 · TS 6 · Vite 8 · **TanStack Query 5** | Sunucu durumu (cache, retry, keepPreviousData) için elle state yönetiminden daha sağlam. |
 
-Refresh token rotation, multi-model LLM, Kubernetes ve gerçek hasta verisi de bilinçli olarak kapsam
-dışında bırakılmıştır.
+Alternatiflerin değerlendirmesi → [Teknik Tasarım](docs/teknik-tasarim.md).
 
-## Görsel Kanıt Paketi
-
-| Görsel | Kanıtladığı davranış |
-|---|---|
-| [Login ekranı](docs/screenshots/01-login.png) | Doktor girişi |
-| [Arama önerileri](docs/screenshots/02-patient-search-suggestions.png) | Case-insensitive ve debounce'lu hasta keşfi |
-| [Kritik hasta listesi](docs/screenshots/03-critical-patient-list.png) | Kritik sonuçların görsel olarak ayrılması |
-| [Tüp detay ekranı](docs/screenshots/04-patient-tube-detail.png) | Panel modeli, referans aralığı ve durumlar |
-| [AI analizi](docs/screenshots/05-ai-analysis.png) | Özet, takip önerileri ve disclaimer |
-| [Swagger UI](docs/screenshots/06-swagger-ui.png) | API dokümantasyonu |
-| [Audit log cevabı](docs/screenshots/07-audit-log-response.png) | Kalıcı polling logları |
-| [CI başarısı](docs/screenshots/08-ci-success.png) | Otomatik kalite kapısı |
+---
 
 ## Doküman İndeksi
 
-- [Teknik tasarım ve karar savunması](docs/technical-design.md)
-- [Gereksinim karşılama matrisi](docs/requirements-traceability.md)
-- [Test ve kanıt raporu](docs/testing-and-evidence.md)
-- [Demo ve kullanım kılavuzu](docs/demo-guide.md)
-- [AI destekli geliştirme yaklaşımı](docs/ai-assisted-development.md)
-- [Gönderim e-postası taslağı](docs/submission-email.md)
+| Belge | İçerik |
+|---|---|
+| [Kurulum ve Demo Kılavuzu](docs/kurulum-ve-demo.md) | Docker/lokal kurulum, adım adım görselli demo akışı, mock senaryoları, API curl'leri, sorun giderme |
+| [Teknik Tasarım ve Karar Savunması](docs/teknik-tasarim.md) | Mimari, domain modeli, her kararın gerekçe/alternatif/production karşılığı, LLM güvenlik sınırları, test stratejisi |

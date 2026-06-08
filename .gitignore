@@ -5,16 +5,22 @@ AGENTS.md
 DECISIONS.md
 .DS_Store
 PROGRESS_LOG.md
+PANEL_REFACTOR_PLAN.md
 learning-notes/
 docs/*
+# Yeni teslim dokümanları (sıfırdan yazıldı)
+!docs/kurulum-ve-demo.md
+!docs/teknik-tasarim.md
+!docs/ai-prompt-experiments.md
+!docs/screenshots/
+!docs/screenshots/*.png
+# Eski dokümanlar — yeni hâli onaylanıp görseller eklenince kaldırılacak
 !docs/demo-guide.md
 !docs/technical-design.md
 !docs/requirements-traceability.md
 !docs/testing-and-evidence.md
 !docs/ai-assisted-development.md
 !docs/submission-email.md
-!docs/screenshots/
-!docs/screenshots/*.png
 
 # Java / Maven
 target/
