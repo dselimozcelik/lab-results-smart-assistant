@@ -14,14 +14,14 @@ export function AiAnalysisPanel({ sampleId }: { sampleId: string }) {
 
   const mutation = useMutation({
     mutationFn: () => requestAiAnalysis(sampleId),
-    onSuccess: () => notify("success", "Yapay zekâ ön değerlendirmesi hazır."),
+    onSuccess: () => notify("success", "Yapay zeka ön değerlendirmesi hazır."),
     onError: (error) => notify("error", `Analiz alınamadı: ${errorMessage(error)}`),
   });
 
   return (
     <section className="ai-panel">
       <div className="ai-panel-head">
-        <h2 className="ai-panel-title">Yapay zekâ ön değerlendirmesi</h2>
+        <h2 className="ai-panel-title">Yapay zeka ön değerlendirmesi</h2>
         <button
           className="ai-panel-button"
           onClick={() => mutation.mutate()}

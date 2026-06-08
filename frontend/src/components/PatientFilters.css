@@ -1,10 +1,9 @@
 .patient-filters {
-  margin: calc(var(--sp-5) * -1) 0 var(--sp-5);
+  margin: 0 0 var(--sp-5);
   background: var(--c-surface);
   border: 1px solid var(--c-border);
-  border-top: 0;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
 }
 
 .patient-filters summary {
