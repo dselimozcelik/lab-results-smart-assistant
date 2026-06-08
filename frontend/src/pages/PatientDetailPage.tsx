@@ -6,6 +6,7 @@ import type { AnomalyStatus, LabResult } from "../api/labResults";
 import { StatusBadge } from "../components/StatusBadge";
 import { ReferenceRangeBar } from "../components/ReferenceRangeBar";
 import { AiAnalysisPanel } from "../components/AiAnalysisPanel";
+import { Skeleton } from "../components/Skeleton";
 import "./PatientDetailPage.css";
 
 function formatDate(iso: string): string {
@@ -28,22 +29,39 @@ function isAbnormal(status: AnomalyStatus): boolean {
 export function PatientDetailPage() {
   const { patientId } = useParams();
 
-  const { data, isPending, isError, error } = useQuery({
+  const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: ["patient", patientId],
     queryFn: () => getPatient(patientId!),
   });
 
   if (isPending) {
-    return <p className="state-message">Yükleniyor…</p>;
+    return (
+      <div className="patient-detail">
+        <Link to="/" className="detail-back">← Hasta listesine dön</Link>
+        <div className="patient-detail-header">
+          <Skeleton width="80px" height="12px" />
+          <Skeleton width="180px" height="30px" radius="var(--radius-sm)" />
+        </div>
+        <section className="tube-card">
+          <Skeleton width="40%" height="18px" />
+          <div style={{ marginTop: "var(--sp-4)", display: "grid", gap: "var(--sp-3)" }}>
+            <Skeleton height="14px" />
+            <Skeleton width="90%" height="14px" />
+            <Skeleton width="95%" height="14px" />
+          </div>
+        </section>
+      </div>
+    );
   }
 
   if (isError) {
     return (
       <div className="patient-detail">
         <Link to="/" className="detail-back">← Hasta listesine dön</Link>
-        <p className="state-message" role="alert">
-          Hasta bulunamadı: {(error as Error).message}
-        </p>
+        <div className="state-error" role="alert">
+          <p>Hasta bulunamadı: {(error as Error).message}</p>
+          <button type="button" onClick={() => refetch()}>Tekrar dene</button>
+        </div>
       </div>
     );
   }

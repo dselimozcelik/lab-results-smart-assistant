@@ -7,6 +7,7 @@ import { PatientFilters } from "../components/PatientFilters";
 import type { PatientFilterValues } from "../components/PatientFilters";
 import { PatientSearchBar } from "../components/PatientSearchBar";
 import { StatusBadge } from "../components/StatusBadge";
+import { SkeletonRows } from "../components/Skeleton";
 import "./ResultsPage.css";
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -50,7 +51,7 @@ export function PatientsPage() {
     size: pageSize,
   };
 
-  const { data, isPending, isFetching, isError, error } = useQuery({
+  const { data, isPending, isFetching, isError, error, refetch } = useQuery({
     queryKey: ["patients", query],
     queryFn: () => getPatients(query),
     placeholderData: keepPreviousData,
@@ -135,12 +136,17 @@ export function PatientsPage() {
       )}
 
       {isError && (
-        <p className="state-message" role="alert">
-          Hastalar yüklenemedi: {(error as Error).message}
-        </p>
+        <div className="state-error" role="alert">
+          <p>Hastalar yüklenemedi: {(error as Error).message}</p>
+          <button type="button" onClick={() => refetch()}>Tekrar dene</button>
+        </div>
       )}
 
-      {isPending && <p className="state-message">Hastalar yükleniyor…</p>}
+      {isPending && (
+        <div className="results-card">
+          <SkeletonRows rows={8} />
+        </div>
+      )}
 
       {data && (
         <>

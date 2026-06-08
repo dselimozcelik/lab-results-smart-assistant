@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { requestAiAnalysis } from "../api/aiAnalysis";
+import { Skeleton } from "./Skeleton";
 import "./AiAnalysisPanel.css";
 
 export function AiAnalysisPanel({ sampleId }: { sampleId: string }) {
@@ -20,10 +21,19 @@ export function AiAnalysisPanel({ sampleId }: { sampleId: string }) {
         </button>
       </div>
 
+      {mutation.isPending && (
+        <div className="ai-panel-loading" role="status" aria-label="Analiz ediliyor">
+          <Skeleton width="95%" height="13px" />
+          <Skeleton width="100%" height="13px" />
+          <Skeleton width="80%" height="13px" />
+        </div>
+      )}
+
       {mutation.isError && (
-        <p className="ai-panel-error" role="alert">
-          Analiz alınamadı: {(mutation.error as Error).message}
-        </p>
+        <div className="ai-panel-error" role="alert">
+          <p>Analiz alınamadı: {(mutation.error as Error).message}</p>
+          <button type="button" onClick={() => mutation.mutate()}>Tekrar dene</button>
+        </div>
       )}
 
       {mutation.isSuccess && (

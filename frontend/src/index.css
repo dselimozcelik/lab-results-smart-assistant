@@ -183,3 +183,45 @@ a:hover {
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
+
+/*
+ * Shared error state with an inline retry — used by every data view, so it lives here
+ * rather than in any one page's stylesheet (works even on a deep-linked detail page).
+ */
+.state-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-top: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  color: var(--c-critical);
+  background: var(--c-critical-bg);
+  border: 1px solid color-mix(in srgb, var(--c-critical) 35%, transparent);
+  border-radius: var(--radius-lg);
+}
+
+.state-error p {
+  margin: 0;
+}
+
+.state-error button {
+  padding: 7px 13px;
+  color: var(--c-critical);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  background: var(--c-surface);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+
+.state-error button:hover {
+  background: color-mix(in srgb, var(--c-critical) 12%, var(--c-surface));
+}
+
+.state-error button:active {
+  transform: translateY(1px);
+}

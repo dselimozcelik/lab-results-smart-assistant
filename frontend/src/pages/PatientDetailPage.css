@@ -2,6 +2,7 @@
   max-width: 900px;
   margin: 0 auto;
   padding: var(--sp-8) var(--sp-5);
+  animation: rise-in var(--dur-base) var(--ease) both;
 }
 
 .detail-back {
@@ -44,6 +45,16 @@
   box-shadow: var(--shadow-sm);
   padding: var(--sp-5) var(--sp-6);
   margin-bottom: var(--sp-6);
+  transition: box-shadow var(--dur-base) var(--ease), border-color var(--dur-base) var(--ease);
+}
+
+.tube-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--c-border-strong);
+}
+
+.tube-table tr {
+  transition: background var(--dur-fast) var(--ease);
 }
 
 .tube-head {

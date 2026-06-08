@@ -2,6 +2,7 @@
   max-width: 1180px;
   margin: 0 auto;
   padding: var(--sp-8) var(--sp-5);
+  animation: rise-in var(--dur-base) var(--ease) both;
 }
 
 .results-header {
@@ -141,6 +142,20 @@
   border-bottom: 1px solid var(--c-border);
 }
 
+.results-table tbody tr {
+  transition: background var(--dur-fast) var(--ease);
+}
+
+/* Nudge the arrow rightward on hover to signal the row is a link into the detail. */
+.row-clickable:hover .row-arrow {
+  color: var(--c-accent);
+  transform: translateX(3px);
+}
+
+.row-arrow {
+  transition: color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+
 .results-table th:first-child,
 .results-table td:first-child {
   white-space: nowrap;
@@ -205,6 +220,11 @@
   color: var(--c-text-muted);
 }
 
+/* When the card holds skeletons (initial load), give them breathing room. */
+.results-card .skeleton-rows {
+  padding: var(--sp-4) var(--sp-5);
+}
+
 .pagination {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -225,6 +245,8 @@
   border: 1px solid var(--c-border-strong);
   border-radius: var(--radius-md);
   cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 
 .pagination button:last-child {
@@ -235,6 +257,14 @@
 .empty-state button:hover {
   background: var(--c-accent-soft);
   border-color: var(--c-accent);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Press feedback: the button settles down slightly when clicked. */
+.pagination button:active:not(:disabled),
+.empty-state button:active {
+  transform: translateY(1px);
+  box-shadow: none;
 }
 
 .pagination button:disabled {

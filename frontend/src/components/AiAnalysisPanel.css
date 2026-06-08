@@ -29,22 +29,59 @@
   padding: 9px 16px;
   cursor: pointer;
   white-space: nowrap;
+  transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
 }
 .ai-panel-button:hover:not(:disabled) {
   background: var(--c-accent-hover);
+  box-shadow: var(--shadow-sm);
+}
+.ai-panel-button:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
 }
 .ai-panel-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
+.ai-panel-loading {
+  display: grid;
+  gap: var(--sp-3);
+  margin-top: var(--sp-5);
+  border-top: 1px solid var(--c-border);
+  padding-top: var(--sp-5);
+}
+
 .ai-panel-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
   margin: var(--sp-4) 0 0;
-  padding: var(--sp-2) var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
   font-size: var(--fs-sm);
   color: var(--c-critical);
   background: var(--c-critical-bg);
   border-radius: var(--radius-md);
+}
+.ai-panel-error p {
+  margin: 0;
+}
+.ai-panel-error button {
+  padding: 6px 12px;
+  color: var(--c-critical);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  background: var(--c-surface);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+.ai-panel-error button:hover {
+  background: color-mix(in srgb, var(--c-critical) 12%, var(--c-surface));
 }
 
 .ai-panel-result {
