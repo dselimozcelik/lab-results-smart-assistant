@@ -19,6 +19,9 @@
 }
 
 .ai-panel-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
   font-family: var(--font-sans);
   font-size: var(--fs-sm);
   font-weight: 600;
@@ -67,7 +70,15 @@
   border-radius: var(--radius-md);
 }
 .ai-panel-error p {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin: 0;
+}
+.ai-panel-error button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 .ai-panel-error button {
   padding: 6px 12px;
@@ -86,8 +97,18 @@
 
 .ai-panel-result {
   margin-top: var(--sp-5);
-  border-top: 1px solid var(--c-border);
-  padding-top: var(--sp-5);
+  padding: var(--sp-4) var(--sp-5);
+  background: var(--c-surface-2);
+  border-left: 3px solid var(--c-accent);
+  border-radius: var(--radius-md);
+  animation: rise-in var(--dur-base) var(--ease) both;
+}
+
+/* Flagged tests and follow-ups sit side by side on wider screens, stacked when narrow. */
+.ai-panel-blocks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--sp-4) var(--sp-5);
 }
 
 .ai-panel-summary {
@@ -101,6 +122,9 @@
   margin-bottom: var(--sp-4);
 }
 .ai-panel-block h3 {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: var(--fs-xs);
   font-weight: 600;
   text-transform: uppercase;

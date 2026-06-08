@@ -1,11 +1,21 @@
 import { useMutation } from "@tanstack/react-query";
+import { AlertTriangle, ClipboardList, RotateCw, Sparkles } from "lucide-react";
 import { requestAiAnalysis } from "../api/aiAnalysis";
+import { useToast } from "../toast/useToast";
 import { Skeleton } from "./Skeleton";
 import "./AiAnalysisPanel.css";
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Bilinmeyen hata";
+}
+
 export function AiAnalysisPanel({ sampleId }: { sampleId: string }) {
+  const { notify } = useToast();
+
   const mutation = useMutation({
     mutationFn: () => requestAiAnalysis(sampleId),
+    onSuccess: () => notify("success", "Yapay zekâ ön değerlendirmesi hazır."),
+    onError: (error) => notify("error", `Analiz alınamadı: ${errorMessage(error)}`),
   });
 
   return (
@@ -17,6 +27,7 @@ export function AiAnalysisPanel({ sampleId }: { sampleId: string }) {
           onClick={() => mutation.mutate()}
           disabled={mutation.isPending}
         >
+          <Sparkles size={16} aria-hidden="true" />
           {mutation.isPending ? "Analiz ediliyor…" : "AI analizi al"}
         </button>
       </div>
@@ -31,32 +42,38 @@ export function AiAnalysisPanel({ sampleId }: { sampleId: string }) {
 
       {mutation.isError && (
         <div className="ai-panel-error" role="alert">
-          <p>Analiz alınamadı: {(mutation.error as Error).message}</p>
-          <button type="button" onClick={() => mutation.mutate()}>Tekrar dene</button>
+          <p>
+            <AlertTriangle size={15} aria-hidden="true" /> Analiz alınamadı: {errorMessage(mutation.error)}
+          </p>
+          <button type="button" onClick={() => mutation.mutate()}>
+            <RotateCw size={14} aria-hidden="true" /> Tekrar dene
+          </button>
         </div>
       )}
 
       {mutation.isSuccess && (
-        <div className="ai-panel-result">
+        <div className="ai-panel-result" aria-live="polite">
           <p className="ai-panel-summary">{mutation.data.summary}</p>
 
-          {mutation.data.flaggedTests.length > 0 && (
-            <div className="ai-panel-block">
-              <h3>İşaretlenen testler</h3>
-              <ul>
-                {mutation.data.flaggedTests.map((t, i) => <li key={i}>{t}</li>)}
-              </ul>
-            </div>
-          )}
+          <div className="ai-panel-blocks">
+            {mutation.data.flaggedTests.length > 0 && (
+              <div className="ai-panel-block">
+                <h3><AlertTriangle size={13} aria-hidden="true" /> İşaretlenen testler</h3>
+                <ul>
+                  {mutation.data.flaggedTests.map((t, i) => <li key={i}>{t}</li>)}
+                </ul>
+              </div>
+            )}
 
-          {mutation.data.suggestedFollowups.length > 0 && (
-            <div className="ai-panel-block">
-              <h3>Önerilen takip adımları</h3>
-              <ul>
-                {mutation.data.suggestedFollowups.map((t, i) => <li key={i}>{t}</li>)}
-              </ul>
-            </div>
-          )}
+            {mutation.data.suggestedFollowups.length > 0 && (
+              <div className="ai-panel-block">
+                <h3><ClipboardList size={13} aria-hidden="true" /> Önerilen takip adımları</h3>
+                <ul>
+                  {mutation.data.suggestedFollowups.map((t, i) => <li key={i}>{t}</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
 
           <p className="ai-panel-disclaimer">{mutation.data.disclaimer}</p>
           <p className="ai-panel-meta">Model: {mutation.data.model}</p>

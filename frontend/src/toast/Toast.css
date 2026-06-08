@@ -1,0 +1,88 @@
+.toast-viewport {
+  position: fixed;
+  z-index: 50;
+  right: var(--sp-5);
+  bottom: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: min(360px, calc(100vw - 2 * var(--sp-5)));
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-left: 3px solid var(--c-text-faint);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  pointer-events: auto;
+  animation: toast-in var(--dur-base) var(--ease) both;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* A coloured left edge + icon tint encodes the kind at a glance. */
+.toast--success {
+  border-left-color: var(--c-normal);
+}
+.toast--success .toast-icon {
+  color: var(--c-normal);
+}
+.toast--error {
+  border-left-color: var(--c-critical);
+}
+.toast--error .toast-icon {
+  color: var(--c-critical);
+}
+.toast--info {
+  border-left-color: var(--c-accent);
+}
+.toast--info .toast-icon {
+  color: var(--c-accent);
+}
+
+.toast-icon {
+  flex: none;
+  margin-top: 1px;
+}
+
+.toast-message {
+  flex: 1;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: var(--c-text);
+}
+
+.toast-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  color: var(--c-text-faint);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+
+.toast-close:hover {
+  color: var(--c-text);
+  background: var(--c-surface-2);
+}

@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { requestAiAnalysis } from "../api/aiAnalysis";
+import { ToastProvider } from "../toast/ToastProvider";
 import { AiAnalysisPanel } from "./AiAnalysisPanel";
 
 vi.mock("../api/aiAnalysis", () => ({
@@ -19,7 +20,9 @@ function renderPanel() {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <AiAnalysisPanel sampleId="SAMPLE-1" />
+      <ToastProvider>
+        <AiAnalysisPanel sampleId="SAMPLE-1" />
+      </ToastProvider>
     </QueryClientProvider>,
   );
 }
