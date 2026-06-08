@@ -33,10 +33,16 @@ kanıtlanmıştır.
 
 ## 5 Dakikada Çalıştır
 
-**Gereksinim:** Docker + host makinede Ollama. AI ön analizi sistemin çekirdek özelliklerinden
+**Gereksinim:** [Git](https://git-scm.com/downloads),
+[Docker Desktop](https://docs.docker.com/get-started/introduction/get-docker-desktop/) ve host
+makinede [Ollama](https://ollama.com/download). AI ön analizi sistemin çekirdek özelliklerinden
 biridir; modeli önceden indirmek demoyu eksiksiz gösterir.
 
 ```bash
+# Repoyu indir
+git clone https://github.com/dselimozcelik/lab-results-smart-assistant.git
+cd lab-results-smart-assistant
+
 # AI ön analizi modeli (sistemin temel bir parçası)
 ollama pull gemma2:9b
 
@@ -60,6 +66,10 @@ Kullanıcı adı: doctor
 > Docker, dört bileşeni (PostgreSQL, mock cihaz, backend, frontend) tek komutla ayağa kaldırır;
 > kuran kişinin makinesine Java, Node veya PostgreSQL kurması gerekmez. Adım adım kurulum, lokal
 > geliştirme yöntemi ve sorun giderme için → [Kurulum ve Demo Kılavuzu](docs/kurulum-ve-demo.md).
+>
+> **Windows:** Docker Desktop'ı WSL 2 backend ve Linux containers ile çalıştırın. Ollama Windows
+> uygulaması arka planda `localhost:11434` üzerinde çalışır; compose içindeki backend ona
+> `host.docker.internal` üzerinden ulaşır. Aynı komutlar PowerShell'de çalışır.
 
 ---
 
