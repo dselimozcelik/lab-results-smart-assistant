@@ -54,3 +54,15 @@ export function getPatientSuggestions(query: string): Promise<string[]> {
 export function getPatient(patientId: string): Promise<PatientDetail> {
   return apiFetch<PatientDetail>(`/api/patients/${encodeURIComponent(patientId)}`);
 }
+
+// One test's numeric history for a patient, oldest to newest, for the trend sparkline.
+export type TestHistoryPoint = {
+  measuredAt: string;
+  value: number;
+};
+
+export function getTestHistory(patientId: string, testCode: string): Promise<TestHistoryPoint[]> {
+  return apiFetch<TestHistoryPoint[]>(
+    `/api/patients/${encodeURIComponent(patientId)}/tests/${encodeURIComponent(testCode)}/history`,
+  );
+}

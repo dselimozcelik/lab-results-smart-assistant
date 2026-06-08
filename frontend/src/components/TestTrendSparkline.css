@@ -1,0 +1,40 @@
+.sparkline {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 92px;
+}
+
+.sparkline-chart {
+  flex: 1;
+  min-width: 56px;
+}
+
+/* The line and trend glyph take their colour from the trend direction. */
+.sparkline--up {
+  color: var(--c-high);
+}
+.sparkline--down {
+  color: var(--c-low);
+}
+.sparkline--flat {
+  color: var(--c-text-faint);
+}
+
+.sparkline-trend {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+
+.sparkline-placeholder {
+  display: block;
+  width: 92px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--c-surface-2);
+}
+
+.sparkline-empty {
+  color: var(--c-text-faint);
+}

@@ -5,6 +5,7 @@ import type { SampleGroup } from "../api/patients";
 import type { AnomalyStatus, LabResult } from "../api/labResults";
 import { StatusBadge } from "../components/StatusBadge";
 import { ReferenceRangeBar } from "../components/ReferenceRangeBar";
+import { TestTrendSparkline } from "../components/TestTrendSparkline";
 import { AiAnalysisPanel } from "../components/AiAnalysisPanel";
 import { Skeleton } from "../components/Skeleton";
 import "./PatientDetailPage.css";
@@ -77,13 +78,13 @@ export function PatientDetailPage() {
       </div>
 
       {data.samples.map((sample) => (
-        <TubeCard key={sample.sampleId} sample={sample} />
+        <TubeCard key={sample.sampleId} patientId={data.patientId} sample={sample} />
       ))}
     </div>
   );
 }
 
-function TubeCard({ sample }: { sample: SampleGroup }) {
+function TubeCard({ patientId, sample }: { patientId: string; sample: SampleGroup }) {
   const tests = abnormalFirst(sample.tests);
 
   return (
@@ -103,6 +104,7 @@ function TubeCard({ sample }: { sample: SampleGroup }) {
               <th>Test</th>
               <th>Değer</th>
               <th>Referans aralığı</th>
+              <th>Trend</th>
               <th>Durum</th>
             </tr>
           </thead>
@@ -122,6 +124,14 @@ function TubeCard({ sample }: { sample: SampleGroup }) {
                     referenceMin={t.referenceMin}
                     referenceMax={t.referenceMax}
                     status={t.anomalyStatus}
+                  />
+                </td>
+                <td>
+                  <TestTrendSparkline
+                    patientId={patientId}
+                    testCode={t.testCode}
+                    referenceMin={t.referenceMin}
+                    referenceMax={t.referenceMax}
                   />
                 </td>
                 <td><StatusBadge status={t.anomalyStatus} /></td>
