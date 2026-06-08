@@ -31,7 +31,7 @@ lab:
     critical-factor: 0.5
   polling:
     mock-base-url: http://mock-lab-service:8081
-    fixed-delay-ms: 10000
+    fixed-delay-ms: ${POLLING_DELAY_MS:30000}
     timeout: 5s
     scenario:
   ollama:

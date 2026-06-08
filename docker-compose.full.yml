@@ -25,6 +25,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-docker-demo-secret-change-me-32bytes-minimum-0123456789}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma2:9b}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5173}
+      POLLING_DELAY_MS: ${POLLING_DELAY_MS:-30000}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

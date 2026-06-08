@@ -37,7 +37,8 @@ lab:
     critical-factor: 0.5
   polling:
     mock-base-url: http://localhost:8081
-    fixed-delay-ms: 10000
+    # Calm default for persistent demo data; override with LAB_POLLING_FIXED_DELAY_MS if needed.
+    fixed-delay-ms: 30000
     timeout: 5s
     # Leave blank for normal operation: the mock streams a varied, realistic random batch.
     # To force a case for a demo, set one of:

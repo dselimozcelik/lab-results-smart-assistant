@@ -62,7 +62,7 @@ public class DeviceResultFactory {
 
     // Normal-operation stream. Pass a fresh Random (seeded for tests, unseeded for live demo).
     public List<SampleBatchDto> randomBatch(Random rnd) {
-        int tubeCount = 2 + rnd.nextInt(3); // 2..4 tubes
+        int tubeCount = 1 + rnd.nextInt(2); // 1..2 tubes: enough for a demo without flooding the DB
         List<SampleBatchDto> batch = new ArrayList<>(tubeCount);
         for (int i = 0; i < tubeCount; i++) {
             batch.add(randomTube(rnd));

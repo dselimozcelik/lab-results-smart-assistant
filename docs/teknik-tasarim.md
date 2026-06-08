@@ -142,7 +142,9 @@ açık kalır ve **gizli N+1 / lazy-init** sorunlarını maskelerdi. Kapalı tut
 
 ### Seçilen yaklaşım
 
-Backend mock cihazı **`@Scheduled(fixedDelay = 10s)`** ile çağırır (`lab.polling.fixed-delay-ms`).
+Backend mock cihazı varsayılan olarak **`@Scheduled(fixedDelay = 30s)`** ile çağırır
+(`lab.polling.fixed-delay-ms`). Normal mock batch 1-2 tüp üretir; full Docker çalıştırmasında
+`POLLING_DELAY_MS` ile demo hızı değiştirilebilir.
 
 ### Neden `fixedDelay`, `fixedRate` değil?
 

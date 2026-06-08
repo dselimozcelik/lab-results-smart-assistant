@@ -137,7 +137,7 @@ docker compose -f docker-compose.full.yml up --build
 
 1. PostgreSQL'in **health** kontrolünü bekler (compose `depends_on: service_healthy`).
 2. **Flyway** migration'larını uygular (V1 → V8).
-3. Mock servisten **periyodik** veri çekmeye başlar (her 10 sn).
+3. Mock servisten **periyodik** veri çekmeye başlar (varsayılan her 30 sn, cycle başına 1-2 tüp).
 
 Ayrı bir terminalde doğrulayın:
 
@@ -162,6 +162,20 @@ Windows PowerShell'de port değiştirmek için:
 $env:FRONTEND_PORT="15173"
 $env:BACKEND_PORT="18080"
 $env:MOCK_LAB_PORT="18081"
+docker compose -f docker-compose.full.yml up --build
+```
+
+Varsayılan veri üretimi kalıcı demo veritabanını hızla doldurmamak için sakindir. Daha hızlı bir
+demo akışı istenirse polling aralığı değiştirilebilir:
+
+```bash
+POLLING_DELAY_MS=5000 docker compose -f docker-compose.full.yml up --build
+```
+
+Windows PowerShell:
+
+```powershell
+$env:POLLING_DELAY_MS="5000"
 docker compose -f docker-compose.full.yml up --build
 ```
 

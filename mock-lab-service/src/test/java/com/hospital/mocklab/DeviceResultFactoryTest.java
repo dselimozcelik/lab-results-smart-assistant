@@ -16,7 +16,7 @@ class DeviceResultFactoryTest {
     void randomBatchProducesTubesEachWithAPanel() {
         List<SampleBatchDto> batch = factory.randomBatch(new Random(42));
 
-        assertThat(batch).isNotEmpty();
+        assertThat(batch).hasSizeBetween(1, 2);
         for (SampleBatchDto tube : batch) {
             assertThat(tube.sampleId()).isNotBlank();
             assertThat(tube.patientId()).isNotBlank();
