@@ -3,6 +3,21 @@
 Bu kılavuz sistemi ilk kez çalıştıran bir kişinin kurulumu tamamlamasını, temel akışı göstermesini
 ve teknik değerlendirme demosunu tekrarlanabilir biçimde sunmasını sağlar.
 
+## Değerlendirici İçin Önerilen İnceleme Sırası
+
+| Adım | Yapılacak işlem | Beklenen davranış | Kanıtladığı karar |
+|---|---|---|---|
+| 1 | Full stack'i Docker ile başlatın | Dört servis ayağa kalkar, Flyway migration'ları uygulanır | Tek komutluk tekrarlanabilir teslim |
+| 2 | Login olun | Korumalı hasta listesine geçilir | BCrypt + JWT + Spring Security |
+| 3 | Aramaya küçük harfle `p-` yazın | Debounce sonrası öneriler görünür, liste hemen sorgulanmaz | Kontrollü ve case-insensitive UX |
+| 4 | Kritik bir hastayı açın | Kritik satır/badge ve tüp içindeki anormal testler görünür | Deterministic anomaly + erişilebilir UX |
+| 5 | AI analizi isteyin | Loading, yorum, takip önerisi ve disclaimer görünür | Kontrollü LLM + backend güvenlik sınırları |
+| 6 | Audit API'yi inceleyin | Polling sayıları ve hata detayları görünür | Gözlemlenebilir ingestion |
+| 7 | Swagger ve CI'ı inceleyin | API sözleşmesi ve otomatik kalite kapısı görünür | Savunulabilir ve doğrulanmış teslim |
+
+Teknik kararların ayrıntılı açıklaması için [teknik tasarım](technical-design.md), her case maddesinin
+kanıtı için [gereksinim matrisi](requirements-traceability.md) kullanılabilir.
+
 ## 1. Demo öncesi kontrol listesi
 
 - Docker çalışıyor.
@@ -142,6 +157,19 @@ curl 'http://localhost:8081/api/device-results/batch?seed=42'
 ```
 
 `device-error` için beklenen cevap `503 Service Unavailable` değeridir.
+
+### Senaryoların backend etkisi
+
+| Scenario | Beklenen backend/audit davranışı | UI etkisi |
+|---|---|---|
+| `normal` | Testler saklanır, valid count artar | Normal badge |
+| `abnormal` | LOW/HIGH hesaplanır | Anormal satır ve badge |
+| `critical` | CRITICAL hesaplanır | Kritik hasta/tüp öne çıkar |
+| `duplicate` | Aynı `sampleId` tekrar eklenmez, duplicate count artar | Listede ikinci kayıt oluşmaz |
+| `missing-field` | Güvenilir tüpte bozuk test `INVALID` saklanır | Geçersiz badge |
+| `invalid-unit` | Test `INVALID`, sebep audit detayında | Geçersiz badge |
+| `stale` | Bütün tüp reddedilir | Hasta/tüp listesine eklenmez |
+| `device-error` | Cycle failure audit edilir, backend çalışmaya devam eder | Mevcut veriler görüntülenmeye devam eder |
 
 ### Backend polling'i belirli senaryoya yönlendirme
 

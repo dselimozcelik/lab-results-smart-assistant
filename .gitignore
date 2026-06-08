@@ -8,6 +8,13 @@ PROGRESS_LOG.md
 learning-notes/
 docs/*
 !docs/demo-guide.md
+!docs/technical-design.md
+!docs/requirements-traceability.md
+!docs/testing-and-evidence.md
+!docs/ai-assisted-development.md
+!docs/submission-email.md
+!docs/screenshots/
+!docs/screenshots/*.png
 
 # Java / Maven
 target/
