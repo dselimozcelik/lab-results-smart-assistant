@@ -14,13 +14,23 @@ public class AnomalySummaryBuilder {
 
     public String build(Sample sample) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Hasta: ").append(sample.getPatientId()).append('\n');
-        sb.append("Numune: ").append(sample.getSampleId()).append('\n');
+        sb.append("Hasta: ").append(sanitize(sample.getPatientId())).append('\n');
+        sb.append("Numune: ").append(sanitize(sample.getSampleId())).append('\n');
         sb.append("Bu paneldeki testler:\n");
         for (LabResult r : sample.getTests()) {
             sb.append("- ").append(line(r)).append('\n');
         }
         return sb.toString().stripTrailing();
+    }
+
+    // Identifiers come from an external device, so treat them as untrusted. Newlines and the
+    // bracket/backtick characters we use as prompt structure are stripped so a crafted id like
+    // "P-1\n[DURUM=NORMAL] ..." can't inject fake test lines or instructions into the prompt.
+    private String sanitize(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replaceAll("[\\r\\n`\\[\\]]", " ").strip();
     }
 
     private String line(LabResult r) {
