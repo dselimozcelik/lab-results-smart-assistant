@@ -52,10 +52,10 @@ public class AiAnalysisService {
         this.objectMapper = objectMapper;
     }
 
-    // readOnly: this method only reads the tube and its lazy test collection (and writes the new
-    // analysis through the repository's own transaction); declaring it documents intent and keeps
-    // the lazy-load session open while the summary is built.
-    @Transactional(readOnly = true)
+    // One transaction so the tube's lazy test collection stays loadable while the summary is built,
+    // and the cached analysis is persisted at the end. Not readOnly: this method writes (saves the
+    // analysis), so a readOnly transaction would reject the INSERT.
+    @Transactional
     public AiAnalysis analyze(String sampleId) {
         Sample sample = sampleRepository.findBySampleId(sampleId)
                 .orElseThrow(() -> new EntityNotFoundException("Sample not found: " + sampleId));

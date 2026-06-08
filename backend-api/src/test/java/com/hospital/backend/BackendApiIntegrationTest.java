@@ -2,6 +2,8 @@ package com.hospital.backend;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hospital.backend.ai.AiAnalysisRepository;
+import com.hospital.backend.ai.OllamaClient;
 import com.hospital.backend.audit.PollingAuditLogRepository;
 import com.hospital.backend.labresult.AnomalyStatus;
 import com.hospital.backend.labresult.LabResultIngestionService;
@@ -27,6 +29,10 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -59,11 +65,20 @@ class BackendApiIntegrationTest {
     @Autowired
     PollingAuditLogRepository auditRepository;
 
+    @Autowired
+    AiAnalysisRepository aiAnalysisRepository;
+
     @MockBean
     LabResultPoller poller;
 
+    // The LLM is mocked so the test runs without Ollama; everything around it (real Postgres
+    // transaction, JSON parse, cache persistence) stays real.
+    @MockBean
+    OllamaClient ollamaClient;
+
     @BeforeEach
     void cleanDatabase() {
+        aiAnalysisRepository.deleteAll();
         auditRepository.deleteAll();
         sampleRepository.deleteAll();
     }
@@ -133,5 +148,47 @@ class BackendApiIntegrationTest {
                 .asString()
                 .contains("Invalid test S-INTEGRATION/GLU")
                 .contains("\"outcome\":\"PROCESSED\"");
+    }
+
+    // Guards against a readOnly-transaction regression: analyze() reads the tube's lazy collection
+    // AND persists the cached analysis, so it must run in a read-write transaction. A readOnly one
+    // would make Postgres reject the INSERT with a 500. Also verifies the second call is a cache hit.
+    @Test
+    void aiAnalysisPersistsToRealPostgresAndCachesTheResult() throws Exception {
+        SampleBatchDto tube = new SampleBatchDto(
+                "S-AI", "P-AI", Instant.now(), "DEV-1",
+                List.of(new TestResultDto("GLU", "Glucose", "mg/dL", 95.0, 70.0, 110.0)));
+        ingestionService.ingest(List.of(tube));
+
+        when(ollamaClient.generate(anyString())).thenReturn("""
+                {"summary":"Panel genel olarak normaldir.","flaggedTests":[],"suggestedFollowups":[]}
+                """);
+
+        String bearer = "Bearer " + loginToken();
+
+        // First call: hits the (mocked) model and must persist through a read-write transaction.
+        mockMvc.perform(post("/api/samples/S-AI/ai-analysis").header("Authorization", bearer))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.summary").value("Panel genel olarak normaldir."))
+                .andExpect(jsonPath("$.disclaimer").isNotEmpty());
+
+        assertThat(aiAnalysisRepository.findAll()).hasSize(1);
+
+        // Second call: served from the DB cache, the model is not invoked again.
+        mockMvc.perform(post("/api/samples/S-AI/ai-analysis").header("Authorization", bearer))
+                .andExpect(status().isOk());
+
+        verify(ollamaClient, times(1)).generate(anyString());
+    }
+
+    private String loginToken() throws Exception {
+        String loginJson = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"username":"doctor","password":"Doctor123!"}
+                                """))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        return objectMapper.readTree(loginJson).get("token").asText();
     }
 }
