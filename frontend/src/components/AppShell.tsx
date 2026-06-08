@@ -1,5 +1,7 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Moon, Sun } from "lucide-react";
 import { useAuth } from "../auth/useAuth";
+import { useTheme } from "../theme/useTheme";
 import "./AppShell.css";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -8,6 +10,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 export function AppShell() {
   const { session, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -28,6 +31,15 @@ export function AppShell() {
           </Link>
 
           <div className="app-user">
+            <button
+              type="button"
+              className="app-theme-toggle"
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Açık temaya geç" : "Koyu temaya geç"}
+              title={theme === "dark" ? "Açık tema" : "Koyu tema"}
+            >
+              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
             <div className="app-user-copy">
               <strong>{session?.username}</strong>
               <span>{ROLE_LABELS[session?.role ?? ""] ?? session?.role}</span>

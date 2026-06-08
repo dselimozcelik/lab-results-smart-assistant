@@ -61,7 +61,51 @@
   --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.04);
   --shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.1);
 
+  /* Motion — one timing scale so every transition feels part of the same system. */
+  --ease: cubic-bezier(0.2, 0.6, 0.2, 1);
+  --dur-fast: 0.14s;
+  --dur-base: 0.22s;
+
   color-scheme: light;
+}
+
+/*
+ * Dark theme — a deep, cool slate (never pure black, easier on the eyes on a night shift).
+ * Only the token VALUES change here; every component reads the same variable names, so the
+ * whole app re-themes from this one block. Status hues are re-tuned for contrast on dark fills.
+ */
+:root[data-theme="dark"] {
+  --c-bg: #0e131a;
+  --c-surface: #161d27;
+  --c-surface-2: #1e2733;
+  --c-border: #283341;
+  --c-border-strong: #3a4757;
+
+  --c-text: #e7ecf3;
+  --c-text-muted: #a3afbf;
+  --c-text-faint: #6f7c8d;
+
+  --c-accent: #2dd4bf;       /* brighter teal so it reads on dark */
+  --c-accent-hover: #5eead4;
+  --c-accent-soft: #12302e;
+  --c-accent-ring: rgba(45, 212, 191, 0.4);
+
+  --c-normal: #4ade80;
+  --c-normal-bg: #103024;
+  --c-low: #fbbf24;
+  --c-low-bg: #322611;
+  --c-high: #fb923c;
+  --c-high-bg: #341f10;
+  --c-critical: #f87171;
+  --c-critical-bg: #3a1717;
+  --c-invalid: #94a3b8;
+  --c-invalid-bg: #232c38;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+
+  color-scheme: dark;
 }
 
 /* — Reset — */
@@ -83,6 +127,30 @@ body {
   font-family: var(--font-sans);
   font-size: var(--fs-base);
   line-height: 1.5;
+  transition: background var(--dur-base) var(--ease), color var(--dur-base) var(--ease);
+}
+
+/* Page-load entrance: content rises and fades in once, calmly. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Respect users who ask for less motion: no transitions, no entrance animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
 
 /* Numbers (lab values) align in columns with tabular figures. */

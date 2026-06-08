@@ -6,7 +6,8 @@
   position: sticky;
   z-index: 20;
   top: 0;
-  background: rgba(255, 255, 255, 0.94);
+  /* color-mix keeps the frosted look in both themes by tinting the live surface token. */
+  background: color-mix(in srgb, var(--c-surface) 88%, transparent);
   border-bottom: 1px solid var(--c-border);
   backdrop-filter: blur(12px);
 }
@@ -95,12 +96,29 @@
   border: 1px solid var(--c-border-strong);
   border-radius: var(--radius-md);
   cursor: pointer;
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
 }
 
-.app-user button:hover {
+/* Only the logout (last) button turns red on hover; the theme toggle stays neutral. */
+.app-user button:last-child:hover {
   color: var(--c-critical);
   background: var(--c-critical-bg);
   border-color: var(--c-critical);
+}
+
+.app-theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0 !important;
+}
+
+.app-theme-toggle:hover {
+  color: var(--c-accent);
+  background: var(--c-accent-soft);
+  border-color: var(--c-accent);
 }
 
 @media (max-width: 520px) {
