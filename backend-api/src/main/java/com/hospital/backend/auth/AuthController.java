@@ -1,5 +1,6 @@
 package com.hospital.backend.auth;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.Valid;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -28,6 +29,7 @@ public class AuthController {
     }
 
     // Verifies credentials and returns a signed JWT. Bad credentials => 401 (handled globally).
+    @SecurityRequirements
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         Authentication auth = authenticationManager.authenticate(

@@ -106,7 +106,11 @@ class BackendApiIntegrationTest {
     void openApiDocumentationIsPubliclyAvailable() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.openapi").isString());
+                .andExpect(jsonPath("$.openapi").isString())
+                .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.type").value("http"))
+                .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme").value("bearer"))
+                .andExpect(jsonPath("$.security[0].bearerAuth").isArray())
+                .andExpect(jsonPath("$.paths['/api/auth/login'].post.security").isEmpty());
     }
 
     @Test
