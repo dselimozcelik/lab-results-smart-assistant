@@ -118,7 +118,7 @@
 }
 
 .results-table-scroll {
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
 .results-table {
@@ -308,6 +308,10 @@
   .results-toolbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .results-table-scroll {
+    overflow-x: auto;
   }
 
   .results-table {
