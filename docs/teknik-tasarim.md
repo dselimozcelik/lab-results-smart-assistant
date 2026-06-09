@@ -140,7 +140,8 @@ bilinçli olarak (örneğin `JOIN FETCH` ile) çözmeyi zorunlu kılıyor.
 
 Backend mock cihazı varsayılan olarak `@Scheduled(fixedDelay = 30s)` ile çağırır
 (`lab.polling.fixed-delay-ms`). Normal mock batch 1-2 tüp üretir; full Docker çalıştırmasında demo
-hızı `POLLING_DELAY_MS` ile değiştirilebilir.
+hızı `POLLING_DELAY_MS` ile değiştirilebilir. Bu tek değişken aynı zamanda frontend'in backend'den
+veri yenileme (refetch) aralığını da ayarlar; iki taraf aynı cadence'te kalır.
 
 ### Neden `fixedDelay`, `fixedRate` değil?
 

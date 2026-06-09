@@ -115,15 +115,6 @@ ollama pull qwen2.5:7b
 OLLAMA_MODEL=qwen2.5:7b docker compose -f docker-compose.full.yml up --build
 ```
 
-Yenileme aralığı `POLLING_DELAY_MS` ile dışarıdan ayarlanır; tek değişken hem backend polling'ini
-hem frontend yenilemesini (refetch) birlikte değiştirir, varsayılan 30 sn (`30000`). Frontend değeri
-Vite build argümanı olarak gömüldüğünden image yeniden build edilir:
-
-```bash
-# Hem backend polling hem frontend yenileme 15 sn olur
-POLLING_DELAY_MS=15000 docker compose -f docker-compose.full.yml up --build
-```
-
 Model karşılaştırmasının gözlemleri ve seçim gerekçesi →
 [AI Prompt Deney Günlüğü](docs/ai-prompt-experiments.md). LLM güvenlik sınırlarının teknik ayrıntıları →
 [Teknik Tasarım — LLM Tasarımı](docs/teknik-tasarim.md#llm-tasarımı-ve-güvenlik-sınırları).

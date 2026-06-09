@@ -187,7 +187,7 @@ docker compose -f docker-compose.full.yml up --build
 ```
 
 Varsayılan veri üretimi kalıcı demo veritabanını hızla doldurmamak için sakindir. Daha hızlı bir
-demo akışı istenirse polling aralığı değiştirilebilir:
+demo akışı istenirse yenileme aralığı değiştirilebilir:
 
 ```bash
 POLLING_DELAY_MS=5000 docker compose -f docker-compose.full.yml up --build
@@ -200,29 +200,15 @@ $env:POLLING_DELAY_MS="5000"
 docker compose -f docker-compose.full.yml up --build
 ```
 
-### Polling aralıkları
+### Yenileme aralığı
 
-Sistemde iki polling aralığı vardır:
+`POLLING_DELAY_MS` tek değişkeni hem backend'in **mock cihazdan** veri çekme aralığını hem de
+frontend'in **backend'den** veri yenileme (refetch) aralığını birlikte ayarlar. Verilmezse varsayılan
+**30000 = 30 sn**'dir. Frontend değeri Vite build argümanı olarak gömüldüğünden değişiklik için image
+yeniden build edilir (`--build`).
 
-- `POLLING_DELAY_MS` — backend'in **mock cihazdan** veri çekme aralığı (ms). **Yapılandırılabilir**;
-  verilmezse varsayılan **30000 = 30 sn**'dir.
-- Frontend'in **backend'den** veri çekme aralığı **sabit 30 sn**'dir ve yapılandırılamaz.
-
-Daha hızlı akan bir demo için yalnızca backend aralığını düşürün:
-
-```bash
-POLLING_DELAY_MS=5000 docker compose -f docker-compose.full.yml up --build
-```
-
-Windows PowerShell:
-
-```powershell
-$env:POLLING_DELAY_MS="5000"
-docker compose -f docker-compose.full.yml up --build
-```
-
-> Frontend her durumda 30 sn'de bir yeniler; backend daha hızlı yazsa bile arayüzdeki güncelleme
-> bir sonraki 30 sn'lik yenilemede görünür.
+> İki aralık aynı değere bağlı olduğundan backend yeni veriyi yazdıktan sonra arayüz en geç bir
+> sonraki yenilemede güncellenir.
 
 ---
 
