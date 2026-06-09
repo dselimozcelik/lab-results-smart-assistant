@@ -99,7 +99,7 @@ verilen anomali durumlarını yorumlama tutarlılığı daha iyi olduğu için s
 çalıştığından hasta verisi makineden çıkmıyor; karşılığında donanım ihtiyacı kuran kişinin makinesine
 ait:
 
-- `gemma2:9b` için en az 16 GB sistem belleği öneririm. Daha düşük bellekte yanıtlar belirgin şekilde
+- `gemma2:9b` için en az 16 GB sistem belleği önerilir. Daha düşük bellekte yanıtlar belirgin şekilde
   yavaşlayabilir ya da model hiç çalışmayabilir.
 - Model adı kodda sabit değil. Full Docker kurulumunda `OLLAMA_MODEL`, lokal geliştirmede
   `lab.ollama.model` ayarıyla kod değiştirmeden başka bir Ollama modeli seçilebilir.
