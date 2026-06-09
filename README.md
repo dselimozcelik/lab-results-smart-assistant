@@ -278,7 +278,7 @@ GET /api/device-results/batch?scenario=
 ## Test ve Kalite
 
 ```bash
-cd backend-api && ./mvnw test                                  # 53 test
+cd backend-api && ./mvnw test                                  # 54 test
 cd mock-lab-service && ./mvnw test                             # 10 test
 cd frontend && npm ci && npm test && npm run lint && npm run build   # 14 test
 ```

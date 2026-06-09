@@ -138,6 +138,10 @@ export JWT_SECRET="$(openssl rand -base64 48)"
 docker compose -f docker-compose.full.yml up --build
 ```
 
+Tüm ortam değişkenleri (zorunlu/opsiyonel, açıklamalı varsayılanlar) repo kökündeki
+`.env.example` dosyasındadır. İsterseniz `cp .env.example .env` ile kopyalayıp doldurun;
+Compose `.env`'i otomatik okur. Yukarıdaki `export` yöntemi de geçerlidir.
+
 `JWT_SECRET`, JWT token'larını imzalayan özel anahtardır. Repoda tahmin edilebilir bir varsayılan
 bulunmaz: değişken verilmezse Compose başlamaz; 32 karakterden kısaysa backend startup sırasında
 durur. Aynı çalışan sistemde mevcut token'ların geçerli kalması için yeniden başlatmalarda aynı özel
@@ -434,7 +438,7 @@ Korumalı bir endpoint'i denemek için:
 ## 10. Testleri çalıştırma
 
 ```bash
-# Backend — 53 test. Integration testleri Testcontainers ile gerçek PostgreSQL başlatır,
+# Backend — 54 test. Integration testleri Testcontainers ile gerçek PostgreSQL başlatır,
 # bu yüzden Docker çalışmalıdır. Gerçek Ollama veya mock servis GEREKMEZ (MockWebServer).
 cd backend-api && ./mvnw test
 
@@ -462,7 +466,7 @@ npm run build
 npm audit --audit-level=high
 ```
 
-![GitHub Actions CI — backend, mock ve frontend job'ları yeşil](screenshots/13-ci-success.png)
+![GitHub Actions CI — backend, mock ve frontend job'ları yeşil](screenshots/12-ci-success.png)
 
 ---
 

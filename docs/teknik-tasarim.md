@@ -460,7 +460,7 @@ bir build argümanıyla konfigüre edilebilir.
 ## 14. Test stratejisi ve failure-mode matrisi
 
 Test sayısını tek başına bir kalite kanıtı saymıyorum; önemli olan testlerin kritik failure
-mode'larını kapsaması. Güncel durum: backend 53, mock 10, frontend 14, tümü yeşil.
+mode'larını kapsaması. Güncel durum: backend 54, mock 10, frontend 14, tümü yeşil.
 
 ```mermaid
 flowchart TB
