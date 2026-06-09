@@ -18,6 +18,7 @@ birinde sistemin ne yaptığı hem dokümanlı hem de otomatik testlerle sabit.
 ## İçindekiler
 
 - [5 Dakikada Çalıştır](#5-dakikada-çalıştır)
+- [Yerel LLM ve Kaynak Gereksinimi](#yerel-llm-ve-kaynak-gereksinimi)
 - [Mimari](#mimari)
 - [Domain Modeli: Hasta → Tüp → Test](#domain-modeli-hasta--tüp--test)
 - [Öne Çıkan Mühendislik Kararları](#öne-çıkan-mühendislik-kararları)
@@ -69,6 +70,45 @@ Kullanıcı adı: doctor
 > **Windows:** Docker Desktop'ı WSL 2 backend ve Linux containers ile çalıştırın. Ollama Windows
 > uygulaması arka planda `localhost:11434` üzerinde çalışır; compose içindeki backend ona
 > `host.docker.internal` üzerinden ulaşır. Aynı komutlar PowerShell'de çalışır.
+
+---
+
+## Yerel LLM ve Kaynak Gereksinimi
+
+LLM yorumu projenin opsiyonel bir eklentisi değil; doktorun anormal sonuçları daha hızlı
+değerlendirmesine yardımcı olan temel özelliklerden biri. AI olmadan uygulama teknik olarak çalışır
+ama amaçlanan deneyim eksik kalır. LLM, ayrı çalışan Ollama servisine ve makinenin belleğine bağlı.
+Ollama geçici olarak erişilemese ya da model kaynak yetersizliğinden çalışamasa bile, sonuçların
+cihazdan alınması, doğrulanması, saklanması ve doktor ekranında gösterilmesi durmamalı.
+
+Bu yüzden sistem graceful degradation uyguluyor: AI yorumu istenemediğinde o istek kontrollü bir
+`503 AI analysis unavailable` cevabı alır, sistemin geri kalanı çalışmaya devam eder. Amaç, tek bir
+bileşendeki arızanın bütün hastane veri akışını çökertmesini engellemek.
+
+Varsayılan model `gemma2:9b`. Bu modeli, denediğim daha küçük alternatiflere göre Türkçe akıcılığı ve
+verilen anomali durumlarını yorumlama tutarlılığı daha iyi olduğu için seçtim. Model yerel
+çalıştığından hasta verisi makineden çıkmıyor; karşılığında donanım ihtiyacı kuran kişinin makinesine
+ait:
+
+- `gemma2:9b` için en az 16 GB sistem belleği öneririm. Daha düşük bellekte yanıtlar belirgin şekilde
+  yavaşlayabilir ya da model hiç çalışmayabilir.
+- Model adı kodda sabit değil. Full Docker kurulumunda `OLLAMA_MODEL`, lokal geliştirmede
+  `lab.ollama.model` ayarıyla kod değiştirmeden başka bir Ollama modeli seçilebilir.
+- Daha küçük bir model kaynak ihtiyacını azaltır ama özellikle Türkçe anlatımda ve yorum
+  tutarlılığında kalite düşürebilir. Model değiştirilirse aynı prompt senaryolarıyla yeniden
+  değerlendirmek gerekir.
+- Timeout, bağlantı hatası ve bozuk model çıktısı kontrollü biçimde reddedilir; hatalı analiz cache'e
+  yazılmaz. Otomatik testler bu davranışı gerçek Ollama olmadan MockWebServer ile doğrular.
+
+```bash
+# Daha düşük kaynaklı bir modeli full Docker kurulumunda kullanma örneği
+ollama pull qwen2.5:7b
+OLLAMA_MODEL=qwen2.5:7b docker compose -f docker-compose.full.yml up --build
+```
+
+Model karşılaştırmasının gözlemleri ve seçim gerekçesi →
+[AI Prompt Deney Günlüğü](docs/ai-prompt-experiments.md). LLM güvenlik sınırlarının teknik ayrıntıları →
+[Teknik Tasarım — LLM Tasarımı](docs/teknik-tasarim.md#llm-tasarımı-ve-güvenlik-sınırları).
 
 ---
 
