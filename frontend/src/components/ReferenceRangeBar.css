@@ -48,10 +48,16 @@
 .refbar-marker--invalid { background: var(--c-invalid); }
 
 .refbar-bounds {
-  display: flex;
-  justify-content: space-between;
+  position: relative;
+  height: 1em;
   margin-top: 4px;
   font-size: var(--fs-xs);
   color: var(--c-text-muted);
   font-family: var(--font-mono, monospace);
+}
+
+.refbar-bound {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
 }

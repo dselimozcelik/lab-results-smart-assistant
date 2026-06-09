@@ -29,9 +29,10 @@ export function ReferenceRangeBar({ value, referenceMin, referenceMax, status }:
         <div className={`refbar-marker refbar-marker--${status.toLowerCase()}`}
              style={{ left: `${markerPct}%` }} />
       </div>
+      {/* Labels sit under the band edges (20% / 80%), not the track ends, so they line up with the green range. */}
       <div className="refbar-bounds">
-        <span>{referenceMin}</span>
-        <span>{referenceMax}</span>
+        <span className="refbar-bound" style={{ left: "20%" }}>{referenceMin}</span>
+        <span className="refbar-bound" style={{ left: "80%" }}>{referenceMax}</span>
       </div>
     </div>
   );
