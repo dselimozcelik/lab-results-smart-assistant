@@ -150,6 +150,32 @@ class BackendApiIntegrationTest {
                 .contains("\"outcome\":\"PROCESSED\"");
     }
 
+    @Test
+    void invalidTestCannotRollbackValidSiblingTest() {
+        SampleBatchDto tube = new SampleBatchDto(
+                "S-INVALID-SIBLING", "P-INTEGRATION", Instant.now(), "DEV-1",
+                List.of(
+                        new TestResultDto("GLU", "Glucose", null, 95.0, 70.0, 110.0),
+                        new TestResultDto("K", "Potassium", "mmol/L", 4.2, 3.5, 5.1)));
+
+        ingestionService.ingest(List.of(tube));
+
+        Sample stored = sampleRepository.findByPatientIdWithTests("P-INTEGRATION").get(0);
+        assertThat(stored.getTests()).hasSize(2);
+        assertThat(stored.getTests())
+                .filteredOn(test -> test.getTestCode().equals("GLU"))
+                .singleElement()
+                .satisfies(test -> {
+                    assertThat(test.getAnomalyStatus()).isEqualTo(AnomalyStatus.INVALID);
+                    assertThat(test.getUnit()).isEqualTo("INVALID");
+                });
+        assertThat(stored.getTests())
+                .filteredOn(test -> test.getTestCode().equals("K"))
+                .singleElement()
+                .extracting(test -> test.getAnomalyStatus())
+                .isEqualTo(AnomalyStatus.NORMAL);
+    }
+
     // Verifies the eagerly loaded panel can be analysed and persisted without a service-level
     // transaction around the external LLM call. The second call must be served from the DB cache.
     @Test

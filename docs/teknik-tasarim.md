@@ -174,7 +174,15 @@ birlikte audit'e yazılır. Mantık basit: güvenilmez tüp zamanı, güvenilmez
 ### Test seviyesi (TestResultValidator)
 
 Tüp güvenilir olsa bile tek bir testin değeri, birimi ya da sınırı bozuk olabilir. Bu test
-düşürülmez, `INVALID` olarak saklanır.
+düşürülmez, `INVALID` olarak saklanır. `NaN` ve pozitif/negatif sonsuzluk Java'da `Double` olsa da
+gerçek ölçüm değildir; validator bunları açıkça reddeder, classifier da ikinci savunma katmanı olarak
+`INVALID` döndürür. DB'ye sonlu olmayan sayı yazılmaz.
+
+DTO kimlik alanlarının maksimum uzunlukları DB'deki `VARCHAR` sınırlarıyla aynıdır. Böylece aşırı
+uzun dış veri transaction commit sırasında sürpriz constraint hatası üretmek yerine ingestion
+başında kontrollü biçimde reddedilir. Birimi eksik veya DB'ye sığmayacak kadar uzun olan test ise
+`INVALID` durumuyla ve `INVALID` birim placeholder'ıyla saklanır; aynı tüpteki geçerli testleri
+rollback ettirmez. Asıl hata sebebi audit detayında korunur.
 
 ### Neden bozuk test silinmiyor?
 
@@ -266,6 +274,19 @@ edilir.
 Flyway ile seed edilen tek bir demo doktor, BCrypt parola hash'i, stateless ve süreli JWT (60 dk,
 `lab.jwt.expiry-minutes`), Spring Security filter chain, RFC 7807 `ProblemDetail` hata cevapları ve
 frontend'de memory-only token.
+
+### Neden sabit demo doktor var?
+
+Take-home değerlendirmesinde reviewer'ın ayrıca kullanıcı provision etmeden aynı komutlarla login
+akışını doğrulayabilmesi için tek bir demo hesabı Flyway ile deterministik olarak seed edilir. Parola
+repoda açıkça belgelenmiştir; bu bir gizli production credential'ı değil, yalnızca localhost demosunun
+tekrarlanabilir test verisidir.
+
+Bu tercih internete açık veya gerçek veri kullanan ortamda kabul edilemez. Bilinen parola brute-force
+gerektirmeden erişim verir; ayrıca bu teslimde rate-limit ve hesap kilitleme yoktur. Production'da
+demo seed migration'ı çalıştırılmaz, kullanıcılar merkezi identity provider/admin provisioning ile
+oluşturulur, geçici credential ilk girişte değiştirilir ve login endpoint'i rate-limit/lockout ile
+korunur.
 
 ### Neden public register yok?
 
@@ -414,7 +435,7 @@ bir build argümanıyla konfigüre edilebilir.
 ## 14. Test stratejisi ve failure-mode matrisi
 
 Test sayısını tek başına bir kalite kanıtı saymıyorum; önemli olan testlerin kritik failure
-mode'larını kapsaması. Güncel durum: backend 46, mock 10, frontend 14, tümü yeşil.
+mode'larını kapsaması. Güncel durum: backend 53, mock 10, frontend 14, tümü yeşil.
 
 ```mermaid
 flowchart TB

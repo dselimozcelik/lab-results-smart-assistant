@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 import java.util.List;
@@ -12,10 +13,10 @@ import java.util.List;
 // Bean-validation here catches a structurally broken tube envelope; a single broken
 // TEST inside is handled at ingestion (stored as INVALID), not rejected here.
 public record SampleBatchDto(
-        @NotBlank String sampleId,
-        @NotBlank String patientId,
+        @NotBlank @Size(max = 64) String sampleId,
+        @NotBlank @Size(max = 64) String patientId,
         @NotNull Instant measuredAt,
-        @NotBlank String deviceId,
+        @NotBlank @Size(max = 64) String deviceId,
         @NotEmpty @Valid List<TestResultDto> tests
 ) {
 }

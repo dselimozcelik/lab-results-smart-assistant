@@ -255,6 +255,11 @@ Kullanıcı adı: doctor
 Şifre:         Doctor123!
 ```
 
+Bu hesap yalnızca localhost demosunun tekrarlanabilir kurulumu içindir ve parolası bilerek
+dokümante edilmiştir. İnternete açık veya gerçek veri kullanan bir ortamda bu seed hesap
+çalıştırılmaz; kullanıcı provisioning, geçici parola değişimi, rate-limit ve hesap kilitleme
+gerekir.
+
 Başarılı girişten sonra hasta listesi açılır. Mock cihaz her polling cycle'da yeni tüpler ürettiği
 için liste zamanla büyür ve 30 saniyede bir otomatik yenilenir. Kritik sonuçlar hem renk hem de metin
 rozetiyle ayrışır; yalnızca renge bağlı kalmamak bilinçli bir erişilebilirlik tercihi.
@@ -429,7 +434,7 @@ Korumalı bir endpoint'i denemek için:
 ## 10. Testleri çalıştırma
 
 ```bash
-# Backend — 48 test. Integration testleri Testcontainers ile gerçek PostgreSQL başlatır,
+# Backend — 53 test. Integration testleri Testcontainers ile gerçek PostgreSQL başlatır,
 # bu yüzden Docker çalışmalıdır. Gerçek Ollama veya mock servis GEREKMEZ (MockWebServer).
 cd backend-api && ./mvnw test
 

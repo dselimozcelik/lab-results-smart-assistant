@@ -98,8 +98,9 @@ public class LabResultIngestionService {
                     status = anomalyClassifier.classify(test.value(), test.referenceMin(), test.referenceMax());
                     validTests++;
                 }
-                sample.addTest(new LabResult(test.testCode(), test.testName(), test.value(),
-                        test.unit(), test.referenceMin(), test.referenceMax(), status));
+                sample.addTest(new LabResult(test.testCode(), test.testName(), finiteOrNull(test.value()),
+                        persistableUnit(test.unit()), finiteOrNull(test.referenceMin()),
+                        finiteOrNull(test.referenceMax()), status));
             }
 
             sampleRepository.save(sample);
@@ -118,6 +119,16 @@ public class LabResultIngestionService {
             return Optional.empty();
         }
         ConstraintViolation<SampleBatchDto> first = violations.iterator().next();
-        return Optional.of("missing-field: " + first.getPropertyPath() + " " + first.getMessage());
+        return Optional.of("invalid-structure: " + first.getPropertyPath() + " " + first.getMessage());
+    }
+
+    private Double finiteOrNull(Double value) {
+        return value != null && Double.isFinite(value) ? value : null;
+    }
+
+    private String persistableUnit(String unit) {
+        return unit != null && unit.length() <= TestResultValidator.MAX_UNIT_LENGTH
+                ? unit
+                : TestResultValidator.INVALID_UNIT_PLACEHOLDER;
     }
 }

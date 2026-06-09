@@ -195,7 +195,7 @@ Anomali durumu beş değerden biri ve konfigüre edilebilir bir eşikle hesaplan
 | `LOW` | `value < min` |
 | `HIGH` | `value > max` |
 | `CRITICAL` | Değer, sınırı aralık genişliğinin `factor` katından fazla aşıyor (varsayılan `factor = 0.5`) |
-| `INVALID` | Sayısal olmayan değer, bilinmeyen birim, `min > max`, eksik sınır ya da gelecek/çok eski ölçüm |
+| `INVALID` | Eksik veya sonlu olmayan (`NaN`/Infinity) değer, bilinmeyen birim, `min > max`, eksik sınır ya da gelecek/çok eski ölçüm |
 
 ```text
 CRITICAL eşiği:
@@ -218,6 +218,7 @@ kapsam dışı bıraktım. Her birinin nedeni ve production karşılığı var:
 | Senkron LLM çağrısı | Demo akışını sade ve izlenebilir tutmak | Queue + worker + job-status |
 | Tek global kritik faktör | Açıklanabilir demo kuralı yeterli | Test bazlı klinik panik değerleri |
 | Tek `DOCTOR` rolü | Proje kapsamında ek rol gerekmiyor | Identity provider + RBAC |
+| Flyway ile sabit demo doktor | Reviewer ek provisioning yapmadan login akışını doğrulayabilsin | Demo seed yok; IdP/admin provisioning + geçici credential + rate-limit/lockout |
 | Memory'de JWT | Token'ı tarayıcı storage'ında bırakmamak | BFF veya güvenli HttpOnly cookie/session |
 | Tek-instance scheduler | Multi-instance açıkça kapsam dışı | ShedLock / distributed scheduler |
 | HTTP (localhost) | Lokal demo | TLS + secret manager + network policy |
@@ -255,7 +256,7 @@ GET /api/device-results/batch?scenario=
 ## Test ve Kalite
 
 ```bash
-cd backend-api && ./mvnw test                                  # 48 test
+cd backend-api && ./mvnw test                                  # 53 test
 cd mock-lab-service && ./mvnw test                             # 10 test
 cd frontend && npm ci && npm test && npm run lint && npm run build   # 14 test
 ```

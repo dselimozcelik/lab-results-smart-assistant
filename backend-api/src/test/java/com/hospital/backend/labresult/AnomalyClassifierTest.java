@@ -41,4 +41,13 @@ class AnomalyClassifierTest {
     void invertedBoundsIsInvalid() {
         assertThat(classifier.classify(95.0, 110.0, 70.0)).isEqualTo(AnomalyStatus.INVALID);
     }
+
+    @Test
+    void nonFiniteValueOrBoundsAreInvalid() {
+        assertThat(classifier.classify(Double.NaN, 70.0, 110.0)).isEqualTo(AnomalyStatus.INVALID);
+        assertThat(classifier.classify(Double.POSITIVE_INFINITY, 70.0, 110.0))
+                .isEqualTo(AnomalyStatus.INVALID);
+        assertThat(classifier.classify(95.0, Double.NEGATIVE_INFINITY, 110.0))
+                .isEqualTo(AnomalyStatus.INVALID);
+    }
 }

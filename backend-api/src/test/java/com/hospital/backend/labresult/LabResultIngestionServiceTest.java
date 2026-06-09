@@ -82,6 +82,52 @@ class LabResultIngestionServiceTest {
     }
 
     @Test
+    void nonFiniteValueIsStoredAsInvalidWithNullValue() {
+        TestResultDto nanValue = new TestResultDto(
+                "GLU", "Glucose", "mg/dL", Double.NaN, 70.0, 110.0);
+
+        service.ingest(List.of(tube("S-NAN", Instant.now(), nanValue, glucose2())));
+
+        ArgumentCaptor<Sample> saved = ArgumentCaptor.forClass(Sample.class);
+        verify(sampleRepository).save(saved.capture());
+        assertThat(saved.getValue().getTests())
+                .filteredOn(test -> test.getTestCode().equals("GLU"))
+                .singleElement()
+                .satisfies(test -> {
+                    assertThat(test.getAnomalyStatus()).isEqualTo(AnomalyStatus.INVALID);
+                    assertThat(test.getValue()).isNull();
+                });
+        assertAuditCounts(1, 1, 1, 0);
+    }
+
+    @Test
+    void missingUnitIsStoredAsInvalidWithDatabaseSafePlaceholder() {
+        TestResultDto missingUnit = new TestResultDto(
+                "GLU", "Glucose", null, 95.0, 70.0, 110.0);
+
+        service.ingest(List.of(tube("S-NULL-UNIT", Instant.now(), missingUnit, glucose2())));
+
+        ArgumentCaptor<Sample> saved = ArgumentCaptor.forClass(Sample.class);
+        verify(sampleRepository).save(saved.capture());
+        assertThat(saved.getValue().getTests())
+                .filteredOn(test -> test.getTestCode().equals("GLU"))
+                .singleElement()
+                .satisfies(test -> {
+                    assertThat(test.getAnomalyStatus()).isEqualTo(AnomalyStatus.INVALID);
+                    assertThat(test.getUnit()).isEqualTo(TestResultValidator.INVALID_UNIT_PLACEHOLDER);
+                });
+        assertAuditCounts(1, 1, 1, 0);
+    }
+
+    @Test
+    void oversizedTubeIdentityIsRejectedBeforePersistence() {
+        service.ingest(List.of(tube("S".repeat(65), Instant.now(), glucose(95.0))));
+
+        verify(sampleRepository, never()).save(any());
+        assertAuditCounts(1, 0, 1, 0);
+    }
+
+    @Test
     void duplicateTubeIsLoggedNotInserted() {
         when(sampleRepository.existsBySampleId("S-3")).thenReturn(true);
         service.ingest(List.of(tube("S-3", Instant.now(), glucose(95.0))));

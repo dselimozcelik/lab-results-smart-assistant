@@ -24,7 +24,8 @@ public class AnomalyClassifier {
     }
 
     public AnomalyStatus classify(double value, double referenceMin, double referenceMax) {
-        if (referenceMin > referenceMax) {
+        if (!Double.isFinite(value) || !Double.isFinite(referenceMin) || !Double.isFinite(referenceMax)
+                || referenceMin > referenceMax) {
             return AnomalyStatus.INVALID;
         }
 

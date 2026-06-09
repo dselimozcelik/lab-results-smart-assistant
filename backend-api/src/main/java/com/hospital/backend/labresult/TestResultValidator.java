@@ -10,6 +10,9 @@ import java.util.Set;
 @Component
 public class TestResultValidator {
 
+    static final String INVALID_UNIT_PLACEHOLDER = "INVALID";
+    static final int MAX_UNIT_LENGTH = 32;
+
     // Recognised measurement units. In production this would be per-test config.
     private static final Set<String> KNOWN_UNITS =
             Set.of("mg/dL", "mmol/L", "g/dL", "10^9/L", "%", "U/L");
@@ -18,11 +21,17 @@ public class TestResultValidator {
         if (test.value() == null) {
             return Optional.of("missing value");
         }
-        if (test.unit() == null || !KNOWN_UNITS.contains(test.unit())) {
+        if (!Double.isFinite(test.value())) {
+            return Optional.of("non-finite value");
+        }
+        if (test.unit() == null || test.unit().length() > MAX_UNIT_LENGTH || !KNOWN_UNITS.contains(test.unit())) {
             return Optional.of("invalid-unit: " + test.unit());
         }
         if (test.referenceMin() == null || test.referenceMax() == null) {
             return Optional.of("missing reference bounds");
+        }
+        if (!Double.isFinite(test.referenceMin()) || !Double.isFinite(test.referenceMax())) {
+            return Optional.of("non-finite reference bounds");
         }
         if (test.referenceMin() > test.referenceMax()) {
             return Optional.of("reference-bounds: min > max");
