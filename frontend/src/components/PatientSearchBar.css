@@ -11,6 +11,10 @@
   box-shadow: var(--shadow-md);
 }
 
+.patient-search-copy {
+  align-self: center;
+}
+
 .patient-search-copy h2 {
   font-size: var(--fs-lg);
 }
