@@ -94,8 +94,8 @@ Bu yüzden sistem graceful degradation uyguluyor: AI yorumu istenemediğinde o i
 `503 AI analysis unavailable` cevabı alır, sistemin geri kalanı çalışmaya devam eder. Amaç, tek bir
 bileşendeki arızanın bütün hastane veri akışını çökertmesini engellemektir.
 
-Varsayılan model `gemma2:9b`. Bu modeli, denediğim daha küçük alternatiflere göre Türkçe akıcılığı ve
-verilen anomali durumlarını yorumlama tutarlılığı daha iyi olduğu için seçtim. Model yerel
+Varsayılan model `gemma2:9b`. Bu model, denenen daha küçük alternatiflere göre Türkçe akıcılığı ve
+verilen anomali durumlarını yorumlama tutarlılığı daha iyi olduğu için seçildi. Model yerel
 çalıştığından hasta verisi makineden çıkmıyor; karşılığında donanım ihtiyacı kuran kişinin makinesine
 ait:
 

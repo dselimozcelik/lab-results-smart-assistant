@@ -1,8 +1,8 @@
 # Teknik Tasarım ve Karar Savunması
 
 Bu belge sistemin ne yaptığını değil, neden bu şekilde tasarlandığını ve hangi trade-off'ların
-bilinçli olarak kabul edildiğini anlatıyor. Her bölümde önce seçtiğim yaklaşım, sonra reddettiğim
-alternatif, en sonda production'da ne yapardım var.
+bilinçli olarak kabul edildiğini anlatıyor. Her bölümde önce seçilen yaklaşım, sonra reddedilen
+alternatif, en sonda production'da ne yapılacağı var.
 
 - Hızlı bakış → [README](../README.md)
 - Kurulum ve görselli demo → [Kurulum ve Demo Kılavuzu](kurulum-ve-demo.md)
@@ -295,9 +295,9 @@ yalnızca login istediği için register eklemek hem bir güvenlik riski hem de 
 
 ### Neden token memory'de, localStorage'da değil?
 
-Token'ı kalıcı storage'a yazmak yerine sayfanın yaşam döngüsü boyunca memory'de tutuyorum. Sayfa
+Token, kalıcı storage'a yazmak yerine sayfanın yaşam döngüsü boyunca memory'de tutulur. Sayfa
 yenilemede tekrar login gerekmesi bir UX maliyeti; ama sağlık verisi demosunda daha dar saldırı
-yüzeyini (XSS ile token sızması riskini azaltmayı) tercih ettim. Production için BFF ya da güvenli bir
+yüzeyi (XSS ile token sızması riskini azaltmak) tercih edildi. Production için BFF ya da güvenli bir
 HttpOnly cookie/session değerlendirilir.
 
 ### JWT imzalama anahtarı neden zorunlu environment variable?
@@ -477,7 +477,7 @@ gözlemlenebilirlik, prompt evaluation, PHI politikaları ve asenkron bir queue 
 
 ## 13. Docker ve çalıştırma modeli
 
-İki compose dosyasını bilinçli olarak ayırdım:
+İki compose dosyası bilinçli olarak ayrıldı:
 
 - `docker-compose.yml` (geliştirme): yalnızca PostgreSQL; uygulamalar host'ta hızlı reload ile çalışır.
 - `docker-compose.full.yml` (teslim): backend, mock, frontend ve PostgreSQL tek komutla.

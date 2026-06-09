@@ -47,7 +47,7 @@ akıl yürütmede güvenilmez.
 
 Üç değişiklik birlikte yapıldı:
 
-1. Prompt yaklaşımı değişti. Modele açıkça söyledim: her testin durumu (NORMAL/LOW/HIGH/CRITICAL/
+1. Prompt yaklaşımı değişti. Modele açıkça söylendi: her testin durumu (NORMAL/LOW/HIGH/CRITICAL/
 INVALID) backend tarafından zaten hesaplandı, köşeli parantez içinde `[DURUM=...]` olarak veriliyor ve
 kesin. Model durumu yeniden hesaplamaz, sadece açıklar. Ayrıca cevap Türkçe, flaggedTests test adıyla,
 imkansız değerler (negatif sayım) veri/cihaz hatası olarak işaretlenir.
@@ -62,7 +62,7 @@ sığarken Türkçeyi akıcı üretiyor.
 
 Görülen son sorun ve çözümü: model, İngilizce test adlarını Türkçe cümle içinde çevirmeye çalışıp
 bozuyordu; en uç örnek "White Blood Cell" yerine "beygir hücre sayımı" demesiydi. Prompt'a "test
-adlarını ASLA çevirme, birebir İngilizce yaz" kuralını ve bir doğru/yanlış örneğini ekledim.
+adlarını ASLA çevirme, birebir İngilizce yaz" kuralı ve bir doğru/yanlış örneği eklendi.
 
 Sonuç (qwen2.5:7b + v3, gerçek çıktılar):
 - Durumlar doğru: GLU 85.3 (NORMAL) artık yanlışlıkla "düşük" denmiyor.
@@ -73,7 +73,7 @@ Sonuç (qwen2.5:7b + v3, gerçek çıktılar):
   ("white blood cell count yüksek"), bazen düzgün Türkçe ("beyaz kan hücre sayımı düşük"); ikisi de
   kabul edilebilir, çünkü UI'da gösterilen flaggedTests her zaman doğru.
 
-Neden burada karar kıldım: flaggedTests (arayüzde gösterilen kritik alan) güvenilir, özetler akıcı ve
+Neden burada karar kılındı: flaggedTests (arayüzde gösterilen kritik alan) güvenilir, özetler akıcı ve
 durumlarla tutarlı, modelin durumu yeniden hesaplaması engellendi. Daha fazla sıkılaştırma küçük
 modelde getirisi azalan bir uğraş; bu seviye demo için yeterli ve savunulabilir.
 
@@ -110,7 +110,7 @@ Sorun (v3'te): özetler doktorun zaten tablodan gördüğü şeyi tekrar ediyord
 normal." Takipler de çok genel: "ek testler gerekebilir." Doktora ekstra bir değer katmıyordu.
 
 Değişiklik: prompt'a açıkça "değerleri TEKRAR ETME; bulguların klinik olarak ne anlama gelebileceğini
-yorumla" görevini ekledim. Buradaki denge önemliydi: daha çok yorum isterken modeli tanı koymaya ya da
+yorumla" görevi eklendi. Buradaki denge önemliydi: daha çok yorum isterken modeli tanı koymaya ya da
 ilaç önermeye itmemek. Bu yüzden:
 - Yorumlar olasılık diliyle ("...düşündürebilir", "...ile uyumlu olabilir"), kesin tanı yok.
 - Takipler somut ama reçetesiz (hangi yönde değerlendirme, hangi ek test, neyin izlenmesi); ilaç adı
@@ -130,10 +130,10 @@ ilaç önermeye itmemek. Bu yüzden:
 Not: daha uzun ve yorumlayıcı cevap istemek, küçük modelin JSON'ı bozma ya da timeout'a yaklaşma
 ihtimalini hafif artırıyor. 5/5 ardışık çağrı sorunsuz geçti; nadir bir parse/timeout hatası zaten
 graceful ele alınıyor (kullanıcı "AI analizi şu an kullanılamıyor" görür, sistem çökmez). Bu yüzden
-ollama timeout'unu 60s'te tuttum.
+ollama timeout'u 60s'te tutuldu.
 
-Karar: v4 + gemma2:9b. Yorum derinliği ile güvenlik korkulukları arasındaki doğru dengeyi bu sürümde
-yakaladım.
+Karar: v4 + gemma2:9b. Yorum derinliği ile güvenlik korkulukları arasındaki doğru denge bu sürümde
+yakalandı.
 
 Güvenlik sınırı: prompt kuralları ve JSON doğrulaması model davranışını sınırlar ama serbest metnin
 klinik doğruluğunu garanti etmez. Backend; deterministic durumları, `flaggedTests` listesini, çıktı
