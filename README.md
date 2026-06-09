@@ -181,6 +181,28 @@ belgesinde.
 | `open-in-view: false` | Lazy-loading kaynaklı gizli N+1 ve açık-Session anti-pattern'i kapatıldı. |
 | Entity değil **DTO** döndürülür | API sözleşmesi DB şemasından ayrı; iç alanlar sızmaz; `PageResponse` stabil pagination verir. |
 
+### Güvenlik retrospektifi: hardcoded JWT secret
+
+İlk geliştirme sürümünde, kurulumu kolaylaştırmak için dev ve Docker konfigürasyonunda tahmin edilebilir
+bir JWT imzalama anahtarı varsayılan olarak bulunuyordu. Bu ciddi bir güvenlik hatasıydı: repo public
+olduğu için anahtarı bilen biri parola kontrolünü tamamen atlayıp kendi imzalı `DOCTOR` token'ını
+üretebilirdi. BCrypt parolayı doğru saklasa bile public JWT anahtarı bütün login korumasını etkisiz
+hale getirirdi.
+
+Bu nedenle public/default anahtar kaldırıldı. Sistem artık `JWT_SECRET` değerini runtime environment
+variable olarak zorunlu ister; değer yoksa veya 32 karakterden kısaysa başlamaz. Lokal demo sırasında
+her kurulum için rastgele anahtar şu komutla üretilir:
+
+```bash
+export JWT_SECRET="$(openssl rand -base64 48)"
+```
+
+Bu yöntem anahtarı kaynak koddan ve container image'dan uzak tutar; ancak environment variable tek
+başına production secret manager değildir. Production'da Vault, AWS Secrets Manager veya platform
+secret store üzerinden injection, erişim denetimi ve kontrollü key rotation kullanılırdı. Eski anahtar
+bir kez git geçmişine girdiyse yalnız koddan silmek yeterli değildir; aktif deployment anahtarları
+rotate edilmeli ve gerekirse git geçmişi temizlenmelidir.
+
 Detay → [Teknik Tasarım](docs/teknik-tasarim.md).
 
 ---
