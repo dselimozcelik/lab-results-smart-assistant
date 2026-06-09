@@ -25,7 +25,7 @@ lab:
     allowed-origins:
       - ${FRONTEND_ORIGIN:http://localhost:5173}
   jwt:
-    secret: ${JWT_SECRET:docker-demo-secret-change-me-32bytes-minimum-0123456789}
+    secret: ${JWT_SECRET}
     expiry-minutes: 60
   anomaly:
     critical-factor: 0.5

@@ -128,6 +128,10 @@
                          daemons reject the version docker-java otherwise picks (HTTP 400 on /info).
                          1.47 is broadly supported, so this is safe on CI too. -->
                     <argLine>-Dapi.version=1.47</argLine>
+                    <!-- Test-only signing key. Runtime profiles require JWT_SECRET from the environment. -->
+                    <systemPropertyVariables>
+                        <JWT_SECRET>test-only-jwt-secret-32bytes-minimum-0123456789</JWT_SECRET>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
         </plugins>

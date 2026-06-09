@@ -28,8 +28,8 @@ lab:
     allowed-origins:
       - http://localhost:5173
   jwt:
-    # Dev-only secret (>= 256 bits for HS256). In production this comes from a secret manager.
-    secret: dev-secret-change-me-please-32bytes-minimum-0123456789
+    # Required even in dev: never fall back to a public signing key.
+    secret: ${JWT_SECRET}
     expiry-minutes: 60
   anomaly:
     # How far beyond a reference bound (as a fraction of the range width) is CRITICAL.

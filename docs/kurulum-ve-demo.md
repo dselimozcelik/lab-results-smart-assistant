@@ -134,8 +134,18 @@ gerekiyorsa ayrı bir terminalde `ollama serve` çalıştırın.
 Clone edilen repo kökünde:
 
 ```bash
+export JWT_SECRET="$(openssl rand -base64 48)"
 docker compose -f docker-compose.full.yml up --build
 ```
+
+`JWT_SECRET`, JWT token'larını imzalayan özel anahtardır. Repoda tahmin edilebilir bir varsayılan
+bulunmaz: değişken verilmezse Compose başlamaz; 32 karakterden kısaysa backend startup sırasında
+durur. Aynı çalışan sistemde mevcut token'ların geçerli kalması için yeniden başlatmalarda aynı özel
+değeri kullanın. Production'da bu değer shell history yerine bir secret manager'dan sağlanmalıdır.
+Bu bir demo çalıştırma yöntemidir: environment variable anahtarı repodan uzak tutar, fakat tek başına
+secret manager değildir. Kararın tehdit modeli, trade-off'u ve production karşılığı
+[Teknik Tasarım — JWT imzalama anahtarı](teknik-tasarim.md#jwt-imzalama-anahtarı-neden-zorunlu-environment-variable)
+bölümünde açıklanır.
 
 İlk build bağımlılıkları indireceği için birkaç dakika sürebilir. Backend açılırken sırayla:
 
@@ -163,6 +173,9 @@ Bu durumda arayüz `http://localhost:15173` olur.
 Windows PowerShell'de port değiştirmek için:
 
 ```powershell
+$bytes = New-Object byte[] 48
+[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+$env:JWT_SECRET=[Convert]::ToBase64String($bytes)
 $env:FRONTEND_PORT="15173"
 $env:BACKEND_PORT="18080"
 $env:MOCK_LAB_PORT="18081"
@@ -202,6 +215,7 @@ docker compose up -d        # sadece PostgreSQL
 cd mock-lab-service && ./mvnw spring-boot:run
 
 # Terminal 2 — backend
+export JWT_SECRET="$(openssl rand -base64 48)"
 cd backend-api && ./mvnw spring-boot:run
 
 # Terminal 3 — frontend
@@ -415,7 +429,7 @@ Korumalı bir endpoint'i denemek için:
 ## 10. Testleri çalıştırma
 
 ```bash
-# Backend — 46 test. Integration testleri Testcontainers ile gerçek PostgreSQL başlatır,
+# Backend — 48 test. Integration testleri Testcontainers ile gerçek PostgreSQL başlatır,
 # bu yüzden Docker çalışmalıdır. Gerçek Ollama veya mock servis GEREKMEZ (MockWebServer).
 cd backend-api && ./mvnw test
 

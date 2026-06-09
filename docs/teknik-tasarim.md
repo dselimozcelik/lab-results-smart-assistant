@@ -279,6 +279,47 @@ yenilemede tekrar login gerekmesi bir UX maliyeti; ama sağlık verisi demosunda
 yüzeyini (XSS ile token sızması riskini azaltmayı) tercih ettim. Production için BFF ya da güvenli bir
 HttpOnly cookie/session değerlendirilir.
 
+### JWT imzalama anahtarı neden zorunlu environment variable?
+
+JWT'nin içeriği şifreli değildir; güvenliği, backend'in token üzerinde doğruladığı imza/MAC değerine
+dayanır. Bu projede simetrik HMAC kullanılır: aynı gizli anahtar hem token üretir hem de doğrular.
+Anahtar public, tahmin edilebilir veya repoda sabit olursa saldırgan kullanıcı parolasını bilmeden
+kendi `DOCTOR` token'ını üretebilir. Bu durumda login ekranı var görünür ama yetkilendirme fiilen
+bypass edilmiş olur.
+
+Bu nedenle dev ve Docker profillerinde public/default bir JWT secret yoktur:
+
+- `JWT_SECRET` runtime environment'ından zorunlu olarak gelir; kaynak kodda ve compose dosyasında
+  gerçek anahtar bulunmaz.
+- Full compose, değişken hiç verilmezse container oluşturmadan açıklayıcı hatayla durur.
+- `JwtProperties`, boş veya 32 karakterden kısa anahtarı kabul etmez; backend startup sırasında
+  fail-fast davranır. Güvensiz ayarla çalışmaya devam etmez.
+- Test paketi yalnız test sürecine ait ayrı bir anahtar kullanır; bu değer runtime teslim
+  konfigürasyonuna fallback değildir.
+- Kurulum kılavuzu `openssl rand -base64 48` ile kriptografik olarak rastgele bir demo anahtarı
+  üretir. Üretilen 48 rastgele byte, minimum uzunluk kontrolünün belirgin biçimde üzerindedir.
+
+Kod karşılığı: `application-dev.yml` ve `application-docker.yml` yalnız `${JWT_SECRET}` okur;
+`docker-compose.full.yml` eksik değişkeni reddeder; `JwtProperties` startup validation uygular;
+`JwtPropertiesTest` kısa anahtarın context'i başlatamadığını doğrular.
+
+Environment variable tek başına bir secret manager değildir; aynı makinede süreç ortamını okuyabilen
+yetkili kişiler değeri görebilir. Buradaki seçim, tek-node lokal demonun anahtarı repoya yazmadan
+çalışmasını sağlayan en sade güvenli teslim yöntemidir. Production'da anahtar Vault, AWS Secrets
+Manager veya platform secret store gibi bir sistemde saklanır ve deployment sırasında enjekte edilir.
+
+Anahtar değişirse daha önce imzalanmış bütün token'lar geçersiz olur. Lokal demo için yeniden login
+kabul edilebilir. Birden çok backend instance'ı olan production ortamında tüm instance'lar aynı aktif
+anahtarı kullanmalı; kesintisiz rotation gerekiyorsa anahtar kimliği (`kid`) ve birden çok doğrulama
+anahtarı desteklenmelidir. Daha geniş bir sistemde imzalama yetkisini doğrulama servislerinden ayırmak
+için asimetrik anahtar (`RS256`/`ES256`) veya merkezi bir identity provider tercih edilirdi.
+
+### Auth güvenlik sınırı
+
+Bu teslim TLS kullanmayan localhost demosudur. BCrypt, JWT imzası, süre sonu, CORS ve memory-only
+token doğru temel kontrolleri sağlar; fakat production auth sistemi olduğu iddia edilmez. Rate-limit,
+hesap kilitleme, merkezi kullanıcı yönetimi, token revocation/rotation ve TLS production kapsamındadır.
+
 ---
 
 ## 11. LLM tasarımı ve güvenlik sınırları
@@ -407,6 +448,7 @@ flowchart TB
 | Aşırı büyük LLM özeti | Çıktı reddedilir ve cache'e yazılmaz | `AiAnalysisServiceTest` |
 | İlk AI yanıtında zaman bilgisi | `createdAt` ilk response'ta doludur | `AiAnalysisServiceTest`, `BackendApiIntegrationTest` |
 | Mock servis yeniden başlatılır | Normal akış sample ID'leri önceki run ile çakışmaz | `DeviceResultFactoryTest` |
+| JWT secret eksik veya kısa | Compose/backend fail-fast; güvensiz ayarla servis açılmaz | `JwtPropertiesTest`, compose config |
 | JWT süresi dolmuş / kurcalanmış / sahte imza | Reddedilir | `JwtServiceTest` |
 | Yetkisiz erişim | Korumalı endpoint `401 ProblemDetail` | `BackendApiIntegrationTest` |
 | Hatalı login | Kullanıcı varlığı sızdırmadan `401` | `LoginPage.test`, `GlobalExceptionHandlerTest` |
@@ -453,6 +495,7 @@ Bağımsız bir teknik incelemede çıkan yüksek etkili noktaları şöyle düz
 | nginx backend'den önce timeout olabilirdi | Proxy timeout'u 70s, backend Ollama timeout'u 60s yapıldı | Kontrollü backend hatası UI'a ulaşsın |
 | Prompt temizliği yalnız kimlik alanlarındaydı | Test adı ve birim dahil tüm dış metin alanları temizleniyor | Cihaz metni prompt yapısı enjekte edemesin |
 | Mock normal akış ID'leri restart sonrası başa dönüyordu | Sample ID'ye run'a özgü prefix eklendi | Kalıcı DB'de yeni veriler yanlışlıkla duplicate sayılmasın |
+| Public varsayılan JWT secret ile sahte token üretilebiliyordu | Runtime `JWT_SECRET` zorunlu yapıldı; eksik/kısa değer fail-fast; regression testi eklendi | Login ve korumalı endpoint'ler tahmin edilebilir bir anahtarla bypass edilemesin |
 | İlk AI response'unda `createdAt` boştu | Entity oluşturulurken zaman atanıyor, DB default'u da korunuyor | İlk ve cache response sözleşmesi tutarlı olsun |
 | Model serbest metin kontrolü zayıftı | Özet/takip boyut sınırları eklendi; semantik sınır açıkça dokümante edildi | Savunulabilir güvenlik sınırı kurmak, yanlış tam güvenlik iddiasından kaçınmak |
 | Disclaimer İngilizceydi | Backend-enforced disclaimer Türkçeleştirildi | Türkçe arayüz ve ürün dili tutarlı olsun |

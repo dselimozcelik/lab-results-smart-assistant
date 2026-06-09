@@ -46,6 +46,9 @@ cd lab-results-smart-assistant
 # AI ön analizi modeli (sistemin temel bir parçası)
 ollama pull gemma2:9b
 
+# Her kurulum için özel JWT imzalama anahtarı üret
+export JWT_SECRET="$(openssl rand -base64 48)"
+
 # Tüm sistemi tek komutla ayağa kaldır
 docker compose -f docker-compose.full.yml up --build
 ```
@@ -66,10 +69,13 @@ Kullanıcı adı: doctor
 > Docker, dört bileşeni (PostgreSQL, mock cihaz, backend, frontend) tek komutla ayağa kaldırır;
 > kuran kişinin makinesine Java, Node veya PostgreSQL kurması gerekmez. Adım adım kurulum, lokal
 > geliştirme yöntemi ve sorun giderme için → [Kurulum ve Demo Kılavuzu](docs/kurulum-ve-demo.md).
+> `JWT_SECRET` zorunludur; public bir varsayılan yoktur. Değer eksikse Compose başlamaz, 32
+> karakterden kısaysa backend güvenli biçimde startup sırasında durur.
 >
 > **Windows:** Docker Desktop'ı WSL 2 backend ve Linux containers ile çalıştırın. Ollama Windows
 > uygulaması arka planda `localhost:11434` üzerinde çalışır; compose içindeki backend ona
-> `host.docker.internal` üzerinden ulaşır. Aynı komutlar PowerShell'de çalışır.
+> `host.docker.internal` üzerinden ulaşır. PowerShell için güvenli `JWT_SECRET` üretme komutu kurulum
+> kılavuzunda yer alır.
 
 ---
 
@@ -171,6 +177,7 @@ belgesinde.
 | Anomali **LLM'e değil, deterministic Java'ya** | Aynı girdi aynı sonucu verir, iş kuralı test edilebilir kalır ve model halüsinasyonu durumu değiştiremez. |
 | LLM çıktısına **kısmen** güvenilir | `flaggedTests` ve disclaimer backend'den gelir; model yalnızca verilen gerçekleri yorumlar. |
 | Token **memory'de**, localStorage'da değil | Sağlık verisi demosunda daha dar saldırı yüzeyi tercih edildi. |
+| JWT secret **zorunlu ve repo dışında** | Public bir imzalama anahtarı login'i bypass edilebilir hale getirir; eksik/kısa secret ile sistem fail-fast olur. |
 | `open-in-view: false` | Lazy-loading kaynaklı gizli N+1 ve açık-Session anti-pattern'i kapatıldı. |
 | Entity değil **DTO** döndürülür | API sözleşmesi DB şemasından ayrı; iç alanlar sızmaz; `PageResponse` stabil pagination verir. |
 
@@ -248,7 +255,7 @@ GET /api/device-results/batch?scenario=
 ## Test ve Kalite
 
 ```bash
-cd backend-api && ./mvnw test                                  # 46 test
+cd backend-api && ./mvnw test                                  # 48 test
 cd mock-lab-service && ./mvnw test                             # 10 test
 cd frontend && npm ci && npm test && npm run lint && npm run build   # 14 test
 ```
