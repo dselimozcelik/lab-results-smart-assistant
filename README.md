@@ -1,12 +1,15 @@
 # Lab Results Smart Assistant
 
-Bir lab cihazını periyodik olarak dinleyen full-stack bir sistem. Gelen test sonuçlarını doğrular,
-saklar, anomalilerini işaretler ve doktora yerel bir LLM üzerinden ön değerlendirme sunar. Doktor
-React arayüzünden giriş yapar; hastalarını, tüplerini ve test panellerini görür.
+Sistem, bir laboratuvar cihazını periyodik olarak dinleyerek gelen test sonuçlarını doğrular,
+veritabanına kaydeder, anormal değerleri işaretler ve yerel bir LLM aracılığıyla doktora ön
+değerlendirme sunar. Doktorlar React tabanlı arayüz üzerinden giriş yaparak hastalarını, tüplerini
+ve test panellerini görüntüleyebilir.
 
-Çoğu demo happy path'i gösterir. Ben hata yollarını da görünür ve test edilebilir tutmaya çalıştım:
-bozuk veri, duplicate mesaj, cihaz kesintisi, LLM timeout'u, hatalı model çıktısı. Bunların her
-birinde sistemin ne yaptığı hem dokümanlı hem de otomatik testlerle sabit.
+Çoğu demo yalnızca "happy path" senaryolarına odaklanırken, bu projede hata senaryoları da görünür
+ve test edilebilir şekilde ele alınmıştır. Bozuk veri, duplicate mesajlar, cihaz bağlantı
+kesintileri, LLM timeout'ları ve hatalı model çıktıları gibi durumlarda sistemin nasıl davranacağı
+açıkça tanımlanmış; bu davranışlar hem dokümantasyon hem de otomatik testlerle güvence altına
+alınmıştır.
 
 > Bu bir teknik değerlendirme projesidir. **Gerçek hasta verisi yoktur; tüm veriler mock/demodur.**
 > AI çıktısı bir tanı değil, doktora yönelik kontrollü bir ön değerlendirmedir.
@@ -81,15 +84,15 @@ Kullanıcı adı: doctor
 
 ## Yerel LLM ve Kaynak Gereksinimi
 
-LLM yorumu projenin opsiyonel bir eklentisi değil; doktorun anormal sonuçları daha hızlı
-değerlendirmesine yardımcı olan temel özelliklerden biri. AI olmadan uygulama teknik olarak çalışır
-ama amaçlanan deneyim eksik kalır. LLM, ayrı çalışan Ollama servisine ve makinenin belleğine bağlı.
-Ollama geçici olarak erişilemese ya da model kaynak yetersizliğinden çalışamasa bile, sonuçların
-cihazdan alınması, doğrulanması, saklanması ve doktor ekranında gösterilmesi durmamalı.
+LLM yorumu projenin opsiyonel bir eklentisi değildir; doktorun anormal sonuçları daha hızlı
+değerlendirmesine yardımcı olan temel özelliklerden biridir. AI olmadan uygulama teknik olarak
+çalışır ama amaçlanan deneyim eksik kalır. LLM, ayrı çalışan Ollama servisine ve makinenin belleğine
+bağlıdır. Ollama geçici olarak erişilemese ya da model kaynak yetersizliğinden çalışamasa bile,
+sonuçların cihazdan alınması, doğrulanması, saklanması ve doktor ekranında gösterilmesi durmamalıdır.
 
 Bu yüzden sistem graceful degradation uyguluyor: AI yorumu istenemediğinde o istek kontrollü bir
 `503 AI analysis unavailable` cevabı alır, sistemin geri kalanı çalışmaya devam eder. Amaç, tek bir
-bileşendeki arızanın bütün hastane veri akışını çökertmesini engellemek.
+bileşendeki arızanın bütün hastane veri akışını çökertmesini engellemektir.
 
 Varsayılan model `gemma2:9b`. Bu modeli, denediğim daha küçük alternatiflere göre Türkçe akıcılığı ve
 verilen anomali durumlarını yorumlama tutarlılığı daha iyi olduğu için seçtim. Model yerel
@@ -145,7 +148,7 @@ Uçtan uca veri akışının ayrıntısı ve her adımın hangi kararı kanıtla
 
 Projedeki en önemli karar buydu. İlk bakışta "her test bir kayıt" daha basit görünüyor. Ama gerçek
 bir lab analizörü bir tüpü (sample) işler ve bir panel üretir: tek hasta, tek `sampleId`, tek ölçüm
-zamanı, birden çok test. Modeli de buna göre üç seviyeye böldüm:
+zamanı, birden çok test. Model buna göre üç seviyeye bölündü:
 
 ```text
 Patient            (API tarafında hasta bazında rollup)
@@ -167,8 +170,8 @@ Gerekçenin tamamı ve reddedilen alternatif:
 
 ## Mühendislik kararları
 
-Her kararın bir cümlelik özü aşağıda. Gerekçesi, alternatifi ve production karşılığı teknik tasarım
-belgesinde.
+Her kararın bir cümlelik özü aşağıdadır. Gerekçesi, alternatifi ve production karşılığı teknik
+tasarım belgesindedir.
 
 | Karar | Neden (özet) |
 |---|---|
@@ -232,8 +235,8 @@ CRITICAL eşiği:
 
 ## Bilinçli Olarak Yapılmayanlar
 
-Bu tek node'luk bir değerlendirme demosu, production-ready olma iddiası yok. Aşağıdakileri bilerek
-kapsam dışı bıraktım. Her birinin nedeni ve production karşılığı var:
+Bu tek node'luk bir değerlendirme demosudur, production-ready olma iddiası yoktur. Aşağıdakiler
+bilerek kapsam dışı bırakıldı. Her birinin nedeni ve production karşılığı vardır:
 
 | Konu | Bu kapsamda neden yok? | Production yaklaşımı |
 |---|---|---|
