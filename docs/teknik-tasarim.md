@@ -523,7 +523,7 @@ gözlemlenebilirlik, prompt evaluation, PHI politikaları ve asenkron bir queue 
 - Hasta detayında anormal testler client-side olarak öne sıralanır.
 - Loading, error, empty ve success durumlarının hepsi görünür; uzun işlemler toast ile bildirilir,
   hatalar retry edilebilir.
-- Liste 30 saniyede bir yenilenir (TanStack Query); demo için WebSocket yerine sade bir yaklaşımdır.
+- Liste varsayılan olarak 30 saniyede bir yenilenir (TanStack Query); demo için WebSocket yerine sade bir yaklaşımdır.
 - Sunucu durumunu TanStack Query yönetir (cache, `keepPreviousData`, retry); elle state tutmaktan
   daha sağlam ve daha az hata yüzeyi açıyor.
 - Session bittiğinde query cache temizlenir; önceki doktorun verisi yeni session'a taşınmaz.

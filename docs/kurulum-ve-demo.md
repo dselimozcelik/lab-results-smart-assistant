@@ -186,8 +186,13 @@ $env:MOCK_LAB_PORT="18081"
 docker compose -f docker-compose.full.yml up --build
 ```
 
-Varsayılan veri üretimi kalıcı demo veritabanını hızla doldurmamak için sakindir. Daha hızlı bir
-demo akışı istenirse yenileme aralığı değiştirilebilir:
+### Yenileme aralığı
+
+Varsayılan veri üretimi kalıcı demo veritabanını hızla doldurmamak için sakindir. `POLLING_DELAY_MS`
+tek değişkeni hem backend'in **mock cihazdan** veri çekme aralığını hem de frontend'in **backend'den**
+veri yenileme (refetch) aralığını birlikte ayarlar. Verilmezse varsayılan **30000 = 30 sn**'dir.
+Frontend değeri Vite build argümanı olarak gömüldüğünden değişiklik için image yeniden build edilir
+(`--build`). Daha hızlı akan bir demo örneği:
 
 ```bash
 POLLING_DELAY_MS=5000 docker compose -f docker-compose.full.yml up --build
@@ -199,13 +204,6 @@ Windows PowerShell:
 $env:POLLING_DELAY_MS="5000"
 docker compose -f docker-compose.full.yml up --build
 ```
-
-### Yenileme aralığı
-
-`POLLING_DELAY_MS` tek değişkeni hem backend'in **mock cihazdan** veri çekme aralığını hem de
-frontend'in **backend'den** veri yenileme (refetch) aralığını birlikte ayarlar. Verilmezse varsayılan
-**30000 = 30 sn**'dir. Frontend değeri Vite build argümanı olarak gömüldüğünden değişiklik için image
-yeniden build edilir (`--build`).
 
 > İki aralık aynı değere bağlı olduğundan backend yeni veriyi yazdıktan sonra arayüz en geç bir
 > sonraki yenilemede güncellenir.
@@ -275,7 +273,7 @@ dokümante edilmiştir. İnternete açık veya gerçek veri kullanan bir ortamda
 gerekir.
 
 Başarılı girişten sonra hasta listesi açılır. Mock cihaz her polling cycle'da yeni tüpler ürettiği
-için liste zamanla büyür ve 30 saniyede bir otomatik yenilenir. Kritik sonuçlar hem renk hem de metin
+için liste zamanla büyür ve varsayılan olarak 30 saniyede bir otomatik yenilenir. Kritik sonuçlar hem renk hem de metin
 rozetiyle ayrışır; yalnızca renge bağlı kalmamak bilinçli bir erişilebilirlik tercihi.
 
 ![Login ekranı](screenshots/01-login.png)
