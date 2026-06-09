@@ -13,8 +13,7 @@ export const patientKeys = {
   suggestions: (query: string) => ["patientSuggestions", query] as const,
 };
 
-// Refetch cadence, kept configurable so it can be aligned with backend polling at deploy time.
-const REFETCH_MS = Number(import.meta.env.VITE_REFETCH_MS) || 30_000;
+const REFETCH_MS = 30_000;
 
 // Patient list, refetched on the same cadence as backend polling, keeping the previous page
 // visible during fetches.

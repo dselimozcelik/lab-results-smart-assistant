@@ -200,31 +200,29 @@ $env:POLLING_DELAY_MS="5000"
 docker compose -f docker-compose.full.yml up --build
 ```
 
-### İki ayrı aralık
+### Polling aralıkları
 
-Sistemde birbirinden bağımsız iki polling aralığı vardır:
+Sistemde iki polling aralığı vardır:
 
-- `POLLING_DELAY_MS` — backend'in **mock cihazdan** veri çekme aralığı (ms).
-- `VITE_REFETCH_MS` — frontend'in **backend'den** veri çekme aralığı (ms, build-time).
+- `POLLING_DELAY_MS` — backend'in **mock cihazdan** veri çekme aralığı (ms). **Yapılandırılabilir**;
+  verilmezse varsayılan **30000 = 30 sn**'dir.
+- Frontend'in **backend'den** veri çekme aralığı **sabit 30 sn**'dir ve yapılandırılamaz.
 
-Her ikisi de **opsiyoneldir**; verilmezse sabit varsayılana düşer (ikisi de **30000 = 30 sn**).
-`VITE_REFETCH_MS` boş veya geçersizse yine 30 sn kullanılır. Canlı akan bir demo için ikisini aynı
-değere ayarlayın; aksi halde frontend, backend zaten yazmış olsa bile bir sonraki yenilemeye kadar
-güncellemeyi göstermez:
+Daha hızlı akan bir demo için yalnızca backend aralığını düşürün:
 
 ```bash
-POLLING_DELAY_MS=5000 VITE_REFETCH_MS=5000 docker compose -f docker-compose.full.yml up --build
+POLLING_DELAY_MS=5000 docker compose -f docker-compose.full.yml up --build
 ```
 
 Windows PowerShell:
 
 ```powershell
-$env:POLLING_DELAY_MS="5000"; $env:VITE_REFETCH_MS="5000"
+$env:POLLING_DELAY_MS="5000"
 docker compose -f docker-compose.full.yml up --build
 ```
 
-> `VITE_REFETCH_MS` build-time gömülür; değiştirince frontend imajının yeniden build edilmesi gerekir
-> (`--build`).
+> Frontend her durumda 30 sn'de bir yeniler; backend daha hızlı yazsa bile arayüzdeki güncelleme
+> bir sonraki 30 sn'lik yenilemede görünür.
 
 ---
 
