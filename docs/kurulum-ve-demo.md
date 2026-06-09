@@ -93,6 +93,10 @@ Windows'ta Docker Desktop ayarlarında **Use the WSL 2 based engine** açık olm
 `http://localhost:11434` adresinde sunar. Container içindeki backend aynı servise
 `host.docker.internal:11434` üzerinden ulaşır.
 
+Repo bir `.gitattributes` taşır: shell script'leri ve `mvnw` LF, Windows launcher'ları (`.cmd`/`.bat`)
+CRLF olarak normalize edilir. Böylece Windows'ta `git clone` yapan biri, Git'in satır sonu ayarından
+bağımsız olarak hem Docker hem de lokal geliştirme yolunu bozulmadan çalıştırır.
+
 ---
 
 ## 3. Repoyu indirme ve Ollama kurulumu
