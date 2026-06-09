@@ -13,13 +13,14 @@ export const patientKeys = {
   suggestions: (query: string) => ["patientSuggestions", query] as const,
 };
 
-// Patient list, polled every 10s, keeping the previous page visible during fetches.
+// Patient list, refetched on the same cadence as backend polling, keeping the previous page
+// visible during fetches.
 export function usePatients(query: PatientQuery) {
   return useQuery({
     queryKey: patientKeys.list(query),
     queryFn: () => getPatients(query),
     placeholderData: keepPreviousData,
-    refetchInterval: 10_000,
+    refetchInterval: 30_000,
   });
 }
 
