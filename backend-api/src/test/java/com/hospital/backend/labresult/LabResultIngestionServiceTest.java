@@ -101,6 +101,28 @@ class LabResultIngestionServiceTest {
     }
 
     @Test
+    void negativeConcentrationIsStoredAsInvalidNotCritical() {
+        // -0.6 mg/dL creatinine is physically impossible: it must be INVALID (a device fault),
+        // not classified CRITICAL as if a real, very-low value had been measured. The value is
+        // kept (not nulled) so a doctor can see exactly what the device reported.
+        TestResultDto negativeCreatinine = new TestResultDto(
+                "CREA", "Creatinine", "mg/dL", -0.6, 0.6, 1.3);
+
+        service.ingest(List.of(tube("S-NEG", Instant.now(), negativeCreatinine, glucose2())));
+
+        ArgumentCaptor<Sample> saved = ArgumentCaptor.forClass(Sample.class);
+        verify(sampleRepository).save(saved.capture());
+        assertThat(saved.getValue().getTests())
+                .filteredOn(test -> test.getTestCode().equals("CREA"))
+                .singleElement()
+                .satisfies(test -> {
+                    assertThat(test.getAnomalyStatus()).isEqualTo(AnomalyStatus.INVALID);
+                    assertThat(test.getValue()).isEqualTo(-0.6);
+                });
+        assertAuditCounts(1, 1, 1, 0);
+    }
+
+    @Test
     void missingUnitIsStoredAsInvalidWithDatabaseSafePlaceholder() {
         TestResultDto missingUnit = new TestResultDto(
                 "GLU", "Glucose", null, 95.0, 70.0, 110.0);
