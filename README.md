@@ -90,9 +90,6 @@ flowchart LR
     F -->|"JWT korumalı REST"| B
 ```
 
-> Ollama'ya giden kesik çizgi bilinçli. LLM'e ulaşılamasa bile sistemin geri kalanı çalışır;
-> AI paneli sadece kontrollü bir hata gösterir.
-
 Uçtan uca veri akışının ayrıntısı ve her adımın hangi kararı kanıtladığı:
 → [Teknik Tasarım — Uçtan Uca Akış](docs/teknik-tasarim.md#uçtan-uca-veri-akışı).
 
@@ -151,7 +148,7 @@ Anomali durumu beş değerden biri ve konfigüre edilebilir bir eşikle hesaplan
 | `LOW` | `value < min` |
 | `HIGH` | `value > max` |
 | `CRITICAL` | Değer, sınırı aralık genişliğinin `factor` katından fazla aşıyor (varsayılan `factor = 0.5`) |
-| `INVALID` | Sayısal olmayan değer, bilinmeyen birim, `min > max`, eksik sınır, ya da gelecek/çok eski ölçüm |
+| `INVALID` | Sayısal olmayan değer, bilinmeyen birim, `min > max`, eksik sınır ya da gelecek/çok eski ölçüm |
 
 ```text
 CRITICAL eşiği:
@@ -173,11 +170,11 @@ kapsam dışı bıraktım. Her birinin nedeni ve production karşılığı var:
 |---|---|---|
 | Senkron LLM çağrısı | Demo akışını sade ve izlenebilir tutmak | Queue + worker + job-status |
 | Tek global kritik faktör | Açıklanabilir demo kuralı yeterli | Test bazlı klinik panik değerleri |
-| Tek `DOCTOR` rolü | Case ek rol istemiyor | Identity provider + RBAC |
+| Tek `DOCTOR` rolü | Proje kapsamında ek rol gerekmiyor | Identity provider + RBAC |
 | Memory'de JWT | Token'ı tarayıcı storage'ında bırakmamak | BFF veya güvenli HttpOnly cookie/session |
 | Tek-instance scheduler | Multi-instance açıkça kapsam dışı | ShedLock / distributed scheduler |
 | HTTP (localhost) | Lokal demo | TLS + secret manager + network policy |
-| WebSocket / realtime | 10 sn'lik yenileme demo için yeterli | Event-driven push |
+| WebSocket / realtime | 30 sn'lik periyodik yenileme demo için yeterli | Event-driven push |
 | Refresh token rotation, multi-model LLM, Kubernetes | Açıkça kapsam dışı | İhtiyaca göre eklenir |
 
 ---

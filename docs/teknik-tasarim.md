@@ -34,10 +34,10 @@ alternatif, en sonda production'da ne yapardım var.
 
 Öncelik sırasıyla:
 
-1. Case'in bütün zorunlu parçalarını uçtan uca çalışan tek bir akışta birleştirmek.
+1. Projenin bütün zorunlu parçalarını uçtan uca çalışan tek bir akışta birleştirmek.
 2. Normal akış kadar bozuk veriyi ve dış servis kesintilerini de görünür, test edilebilir kılmak.
 3. LLM'i sistemin karar vericisi olarak değil, kontrollü bir yorumlayıcı olarak konumlandırmak.
-4. Beş günlük bir case'te gereksiz production karmaşıklığından kaçınmak.
+4. Bu kapsamda gereksiz production karmaşıklığından kaçınmak.
 5. Her önemli kararı kod, test ve dokümanla savunulabilir hale getirmek.
 
 ---
@@ -104,10 +104,6 @@ zamanı, birden çok test. Bunun sonuçları:
 
 "Her test = bağımsız satır + bağımsız AI isteği." Daha basit görünür ama panel bağlamını kaybettirir,
 aynı numunenin metadata'sını her satırda tekrarlar ve idempotency'yi zayıflatır.
-
-> Not: `Patient` ayrı bir tablo değil. Hasta listesi, sorgu zamanında `sample`/`lab_result` üzerinde
-> bir GROUP BY rollup'ı. Bu kapsamda hasta için ayrı bir kimlik tablosu gereksiz olurdu; production'da
-> hasta master-data'sı ayrı bir bounded context olurdu.
 
 ---
 
@@ -235,13 +231,14 @@ sırasında (kod: `LabResultIngestionService`):
 ### Neden DB exception'ına güvenmek yerine ön-kontrol?
 
 PostgreSQL'de bir UNIQUE ihlali mevcut transaction'ı abort eder; aynı transaction içinde exception'ı
-yakalayıp devam etmek güvenilir değil. Bu yüzden ön-kontrol birincil savunma; DB constraint ise yarış
-durumlarına karşı emniyet kemeri.
+yakalayıp devam etmek güvenilir değil. Bu yüzden ön-kontrol birincil savunma; DB constraint ise race
+condition'lara karşı emniyet kemeri.
 
 ### Production
 
-Tek instance'lı scheduler'da DB seviyesinde gerçek bir yarış beklenmez. Multi-instance ingestion'da
-ayrı-transaction yaklaşımı, upsert (`ON CONFLICT`) ya da bir idempotency inbox değerlendirilir.
+Tek instance'lı scheduler'da DB seviyesinde gerçek bir race condition beklenmez. Multi-instance
+ingestion'da ayrı-transaction yaklaşımı, upsert (`ON CONFLICT`) ya da bir idempotency inbox
+değerlendirilir.
 
 ---
 
@@ -270,16 +267,9 @@ Flyway ile seed edilen tek bir demo doktor, BCrypt parola hash'i, stateless ve s
 `lab.jwt.expiry-minutes`), Spring Security filter chain, RFC 7807 `ProblemDetail` hata cevapları ve
 frontend'de memory-only token.
 
-### Terminoloji (mülakat hassasiyeti)
-
-- BCrypt encryption değildir; tek yönlü bir parola hash'idir ve salt'ı kendi içinde taşır.
-- JWT imzalıdır ama şifreli değildir; o yüzden payload'a hassas veri konmaz.
-- Demo localhost'ta HTTP kullanır; production'da TLS zorunlu.
-- Docker profilindeki JWT secret bir demo kolaylığı; production'da secret manager gerekir.
-
 ### Neden public register yok?
 
-Hastane sisteminde doktor hesabı self-service kayıtla açılmaz, admin tarafından provision edilir. Case
+Hastane sisteminde doktor hesabı self-service kayıtla açılmaz, admin tarafından provision edilir. Proje
 yalnızca login istediği için register eklemek hem bir güvenlik riski hem de kapsam genişlemesi olurdu.
 
 ### Neden token memory'de, localStorage'da değil?
@@ -321,7 +311,7 @@ LLM burada klinik bir karar motoru değil, doktora yönelik kontrollü bir yorum
    geri kalanı çalışmaya devam eder.
 9. Sonuç `(sample, model, promptVersion)` ile cache'lenir; ikinci çağrıda LLM hiç çağrılmaz.
 
-Modelin `summary` ve takip önerileri hâlâ güvenilmeyen serbest metin. Kod; biçimi, boyutu,
+Modelin `summary` ve takip önerileri hala güvenilmeyen serbest metin. Kod; biçimi, boyutu,
 deterministik durumları, flagged test listesini ve disclaimer'ı zorluyor ama klinik doğruluğu veya
 tanı dilini eksiksiz biçimde otomatik kanıtlayamıyor. Bu yüzden çıktı bir ön değerlendirme olarak
 sunulur ve doktor incelemesi zorunludur.
@@ -354,7 +344,7 @@ gözlemlenebilirlik, prompt evaluation, PHI politikaları ve asenkron bir queue 
 - Hasta detayında anormal testler client-side olarak öne sıralanır.
 - Loading, error, empty ve success durumlarının hepsi görünür; uzun işlemler toast ile bildirilir,
   hatalar retry edilebilir.
-- Liste 10 saniyede bir yenilenir (TanStack Query); demo için WebSocket yerine sade bir yaklaşım.
+- Liste 30 saniyede bir yenilenir (TanStack Query); demo için WebSocket yerine sade bir yaklaşım.
 - Sunucu durumunu TanStack Query yönetir (cache, `keepPreviousData`, retry); elle state tutmaktan
   daha sağlam ve daha az hata yüzeyi açıyor.
 - Session bittiğinde query cache temizlenir; önceki doktorun verisi yeni session'a taşınmaz.
@@ -441,11 +431,11 @@ flowchart TB
 |---|---|---|
 | Senkron LLM çağrısı | Demo akışını sade ve izlenebilir tutmak | Queue + worker + job-status |
 | Tek global kritik faktör | Açıklanabilir demo kuralı yeterli | Test bazlı klinik panik değerleri |
-| Tek `DOCTOR` rolü | Case ek rol istemiyor | Identity provider + RBAC |
+| Tek `DOCTOR` rolü | Proje kapsamında ek rol gerekmiyor | Identity provider + RBAC |
 | Memory'de JWT | Token'ı tarayıcı storage'ında bırakmamak | BFF veya güvenli HttpOnly cookie/session |
 | Tek-instance scheduler | Multi-instance açıkça kapsam dışı | ShedLock / distributed scheduler |
 | HTTP (localhost) | Lokal demo | TLS + secret manager + network policy |
-| WebSocket / realtime | 10 sn yenileme yeterli | Event-driven push |
+| WebSocket / realtime | 30 sn periyodik yenileme yeterli | Event-driven push |
 | Refresh token rotation | Açıkça kapsam dışı | Rotation + revocation |
 | Multi-model LLM | Açıkça kapsam dışı | Model routing / evaluation |
 | Kubernetes | Tek-node demo için değer katmaz | İhtiyaca göre orchestration |

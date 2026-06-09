@@ -1,8 +1,7 @@
 # AI Prompt Deney Günlüğü
 
 Bu dosya, LLM analiz prompt'unun nasıl şekillendiğini kaydeder: hangi yaklaşımlar
-denendi, ne gibi sorunlar görüldü, neden mevcut sürümde karar kılındı. Amaç, mülakatta
-"prompt'u nasıl tasarladın?" sorusuna somut cevap verebilmek.
+denendi, ne gibi sorunlar görüldü, neden mevcut sürümde karar kılındı.
 
 Güncel model: `gemma2:9b`. İlk deneylerde `llama3.2:3b` ve `qwen2.5:7b` de kullanıldı.
 Tüm karşılaştırmalarda temperature 0 seçildi.
@@ -33,7 +32,7 @@ Gerçek çıktılarda görülen sorunlar (llama3.2:3b ile):
    "glucose level is slightly below the reference range" dedi. Yani backend'in zaten NORMAL dediği bir
    değeri yeniden, üstelik yanlış yorumladı.
 
-2. İmkânsız değerleri sorgulamıyor. WBC -7.9 (negatif lökosit, fiziksel olarak imkânsız) için
+2. İmkansız değerleri sorgulamıyor. WBC -7.9 (negatif lökosit, fiziksel olarak imkansız) için
    "critically low WBC" dedi; "bu değer hatalı olabilir" uyarısı vermedi.
 
 3. flaggedTests'i test kodu olarak döndürüyor, test adı olarak değil ("WBC" yerine "Lökosit"
@@ -51,15 +50,15 @@ akıl yürütmede güvenilmez.
 1. Prompt yaklaşımı değişti. Modele açıkça söyledim: her testin durumu (NORMAL/LOW/HIGH/CRITICAL/
 INVALID) backend tarafından zaten hesaplandı, köşeli parantez içinde `[DURUM=...]` olarak veriliyor ve
 kesin. Model durumu yeniden hesaplamaz, sadece açıklar. Ayrıca cevap Türkçe, flaggedTests test adıyla,
-imkânsız değerler (negatif sayım) veri/cihaz hatası olarak işaretlenir.
+imkansız değerler (negatif sayım) veri/cihaz hatası olarak işaretlenir.
 
 2. Özet formatı netleşti. `AnomalySummaryBuilder` her satırı `[DURUM=X] Ad: değer (referans)` biçimine
 getirdi. Durumu başa ve köşeli paranteze alınca model onu otoriter ve sabit kabul etmeye daha yatkın
 oluyor.
 
 3. Model yükseltildi: `llama3.2:3b` yerine `qwen2.5:7b`. 3B model Türkçe üretirken İngilizce ile
-karışıyordu ("recommended followups", "usededildi"). qwen2.5:7b (M1/16GB'a rahat sığar) Türkçeyi akıcı
-üretiyor.
+karışıyordu ("recommended followups", "usededildi"). qwen2.5:7b yerel donanım sınırlarına rahat
+sığarken Türkçeyi akıcı üretiyor.
 
 Görülen son sorun ve çözümü: model, İngilizce test adlarını Türkçe cümle içinde çevirmeye çalışıp
 bozuyordu; en uç örnek "White Blood Cell" yerine "beygir hücre sayımı" demesiydi. Prompt'a "test
@@ -83,7 +82,7 @@ heuristik yerine) ve özet üretimini senkron yerine kuyruğa alma düşünülü
 
 ---
 
-## Model karşılaştırması: qwen2.5:7b vs gemma2:9b (M1 / 16GB)
+## Model karşılaştırması: qwen2.5:7b vs gemma2:9b
 
 Aynı v3 prompt'u, aynı 3 tüp, temperature 0 ile her iki modele doğrudan gönderildi.
 
@@ -91,15 +90,15 @@ Aynı v3 prompt'u, aynı 3 tüp, temperature 0 ile her iki modele doğrudan gön
 |---|---|---|
 | Türkçe akıcılık | iyi, ama ara sıra "Pasien" gibi kaymalar | daha temiz, kaymasız |
 | Durum doğruluğu (flaggedTests) | bir tüpte LOW potasyumu kaçırdı | LOW potasyumu doğru yakaladı |
-| İmkânsız değer (negatif WBC) farkı | çok iyi açıkladı ("fiziksel olarak imkânsız") | fark etmedi, "kritik düşük" dedi |
-| Hız (M1) | daha hızlı | biraz daha yavaş |
-| RAM | ~5-6GB | ~6-7GB |
+| İmkansız değer (negatif WBC) farkı | çok iyi açıkladı ("fiziksel olarak imkansız") | fark etmedi, "kritik düşük" dedi |
+| Hız | daha hızlı | biraz daha yavaş |
+| Bellek ayak izi | daha düşük | biraz daha yüksek |
 
 Karar: gemma2:9b. Arayüzde gösterilen kritik alan flaggedTests'in doğruluğu ve genel Türkçe temizliği,
-bizim için imkânsız-değer farkındalığından daha önemli. Negatif değer zaten backend tarafında
-CRITICAL/INVALID olarak işaretlendiği için, modelin onu ayrıca "imkânsız" demesi ikincil. gemma2:9b
-16GB M1'e sığıyor; daha büyük qwen2.5:14b denenebilirdi ama 16GB'da sınırda kalıp yavaşlardı. Demo
-için hız/kalite dengesi gemma2:9b'de daha iyi.
+bizim için imkansız-değer farkındalığından daha önemli. Negatif değer zaten backend tarafında
+CRITICAL/INVALID olarak işaretlendiği için, modelin onu ayrıca "imkansız" demesi ikincil. gemma2:9b
+yerel donanıma sığıyor; daha büyük qwen2.5:14b denenebilirdi ama mevcut donanımda sınırda kalıp
+yavaşlardı. Demo için hız/kalite dengesi gemma2:9b'de daha iyi.
 
 Model `application-dev.yml` üzerinden değiştirilebilir; kod hiç değişmez (config-driven).
 
@@ -117,7 +116,7 @@ ilaç önermeye itmemek. Bu yüzden:
 - Takipler somut ama reçetesiz (hangi yönde değerlendirme, hangi ek test, neyin izlenmesi); ilaç adı
   ya da doz yok.
 - summary 3-4 cümle, suggestedFollowups 2-3 somut madde.
-- Güvenlik korkulukları (durumu yeniden hesaplama, uydurma, INVALID/imkânsız değer, test adını
+- Güvenlik korkulukları (durumu yeniden hesaplama, uydurma, INVALID/imkansız değer, test adını
   çevirme) v3'ten aynen korundu.
 
 Önce ve sonra (gerçek çıktı, WBC=2.6 LOW):

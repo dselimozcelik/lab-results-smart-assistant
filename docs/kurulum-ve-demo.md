@@ -53,10 +53,10 @@ otomatik kurar.
   ile çalışır.
 - `docker-compose.full.yml` (teslim): dört parçanın tamamı tek komutla.
 
-Ollama neden Docker'da değil? Yerel LLM büyük bir model ve yaşam döngüsü (indirme, bellek) host'ta
-daha doğru yönetiliyor. Container'lar Ollama'ya `host.docker.internal` üzerinden erişir (Linux'ta full
-compose bu mapping'i otomatik ekler). Ollama'ya ulaşılamasa bile sistemin geri kalanı çalışır; sadece
-AI paneli kontrollü bir hata gösterir.
+Ollama neden Docker'da değil? Yerel LLM büyük bir model ve yaşam döngüsü host'ta daha doğru
+yönetiliyor. Container'lar Ollama'ya `host.docker.internal` üzerinden erişir; Linux'ta full compose bu
+mapping'i otomatik ekler. Ollama'ya ulaşılamasa bile sistemin geri kalanı çalışır; sadece AI paneli
+kontrollü bir hata gösterir.
 
 ---
 
@@ -238,7 +238,7 @@ Kullanıcı adı: doctor
 ```
 
 Başarılı girişten sonra hasta listesi açılır. Mock cihaz her polling cycle'da yeni tüpler ürettiği
-için liste zamanla büyür ve 10 saniyede bir otomatik yenilenir. Kritik sonuçlar hem renk hem de metin
+için liste zamanla büyür ve 30 saniyede bir otomatik yenilenir. Kritik sonuçlar hem renk hem de metin
 rozetiyle ayrışır; yalnızca renge bağlı kalmamak bilinçli bir erişilebilirlik tercihi.
 
 ![Login ekranı](screenshots/01-login.png)
