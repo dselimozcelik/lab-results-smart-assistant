@@ -5,6 +5,7 @@ import {
   getPatientSuggestions,
   type PatientQuery,
 } from "../api/patients";
+import { REFETCH_MS } from "../config";
 
 // Query keys in one place so cache reads/invalidations stay consistent across the app.
 export const patientKeys = {
@@ -12,8 +13,6 @@ export const patientKeys = {
   detail: (patientId: string) => ["patient", patientId] as const,
   suggestions: (query: string) => ["patientSuggestions", query] as const,
 };
-
-const REFETCH_MS = 30_000;
 
 // Patient list, refetched on the same cadence as backend polling, keeping the previous page
 // visible during fetches.

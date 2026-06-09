@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import { ApiError } from "./api/client";
+import { REFETCH_MS } from "./config";
 import { AuthProvider } from "./auth/AuthProvider";
 import { ThemeProvider } from "./theme/ThemeProvider";
 import { ToastProvider } from "./toast/ToastProvider";
@@ -19,7 +20,7 @@ const queryClient = new QueryClient({
         }
         return failureCount < 1;
       },
-      staleTime: 30_000,
+      staleTime: REFETCH_MS,
     },
   },
 });
