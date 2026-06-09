@@ -265,6 +265,60 @@ edilir.
 > Panel modelinde sayıların anlamı: `fetched = tüp sayısı`, `valid/invalid = test sayısı`,
 > `duplicate = tüp sayısı`. (Kolon adları geriye dönük uyumluluk için değişmedi.)
 
+### 9.1 Kalıcı audit kayıtları (`polling_audit_log`)
+
+Her polling döngüsü tabloya tam olarak bir satır yazar. `PollingAuditService` üç sonuç tipi üretir:
+
+| Metot | `outcome` | Ne zaman | Sayılar |
+|-------|-----------|----------|---------|
+| `recordProcessed` | `PROCESSED` | Batch işlendi | gerçek fetched/valid/invalid/duplicate |
+| `recordEmptyBatch` | `EMPTY_BATCH` | Cihaz boş döndü | hepsi 0 |
+| `recordFailure` | `FAILED` | Döngü exception attı | hepsi 0; sebep = exception sınıfı + mesajı |
+
+Satır kolonları: `id`, `created_at` (DB üretir), `fetched_count`, `valid_count`, `invalid_count`,
+`duplicate_count` ve `details`. `details` bir JSON: `{"outcome": "...", "events": [...]}`. JSON
+serileştirme başarısız olursa minimal bir fallback JSON yazılır ve durum `warn` ile loglanır — kayıt
+sessizce düşmez.
+
+`PROCESSED` durumunda `events` listesi, döngüde gerçekleşen her sapmayı insan-okur satırlar olarak
+taşır:
+
+- `Invalid tube {sampleId}: {hata}` — yapısal validasyon başarısız
+- `Rejected tube {sampleId}: {hata}` — tüp metadata validasyonu başarısız
+- `Duplicate tube {sampleId}` — tüp batch içinde veya DB'de mevcut
+- `Duplicate test {sampleId}/{testCode}` — aynı tüpte tekrar eden test kodu
+- `Invalid test {sampleId}/{testCode}: {hata}` — test INVALID olarak saklandı
+
+Bu kayıtlar `GET /api/audit-logs` ile okunur. `events`, audit'in işlevsel izi olduğu için tam id
+içerir (aşağıdaki uygulama loglarından farkı bu).
+
+### 9.2 Uygulama logları (stdout)
+
+Runtime teşhisi için SLF4J. Tümü parametreli (`{}`); string birleştirme yoktur.
+
+| Kaynak | Seviye | Mesaj | Tetik |
+|--------|--------|-------|-------|
+| `LabResultIngestionService` | `warn` | `Invalid tube [{sampleId}]: {hata}` | Yapısal validasyon başarısız |
+| `LabResultIngestionService` | `warn` | `Rejected tube [{sampleId}]: {hata}` | Tüp metadata validasyonu başarısız |
+| `LabResultIngestionService` | `info` | `Duplicate tube skipped [{sampleId}]` | Tüp zaten mevcut |
+| `LabResultIngestionService` | `info` | `Duplicate test in tube [{sampleId}]: {testCode}` | Tüpte tekrar eden test kodu |
+| `LabResultIngestionService` | `warn` | `Invalid test [{sampleId}/{testCode}]: {hata}` | Test INVALID olarak saklandı |
+| `LabResultIngestionService` | `info` | `Ingest cycle: tubes=… validTests=… invalidTests=… duplicateTubes=…` | Her döngü sonu özeti |
+| `LabResultPoller` | `warn` | `Polling cycle failed, will retry: {mesaj}` | Cihaz offline / geçici hata; crash yok |
+| `PollingAuditService` | `warn` | `Could not serialise polling audit details: {mesaj}` | Audit JSON serileştirme hatası |
+| `GlobalExceptionHandler` | `warn` | `AI analysis failed: {mesaj}` | AI analiz endpoint'i hata verdi |
+| `GlobalExceptionHandler` | `error` | `Unhandled exception` (+ stack trace) | Beklenmeyen exception |
+| `AiAnalysisService` | `warn` | `Could not parse model output as JSON: {truncated}` | Model çıktısı JSON parse edilemedi |
+
+### 9.3 Bu kapsamda bilinçli olarak yapılmayanlar
+
+- **Korelasyon-id yok.** Bir döngünün stdout satırlarını ortak bir cycle-id ile bağlama eklenmedi;
+  audit tarafında her döngü tek satır olduğu için izlenebilirlik orada zaten sağlanıyor. Production'da
+  MDC tabanlı bir cycle/trace-id eklenir.
+- **PII maskeleme yok.** `sampleId` ve `testCode` hem stdout loglarında hem audit `events` içinde ham
+  geçer. Lokal demo için kabul edilebilir; gerçek hasta verisinde stdout loglarında maskeleme
+  (ör. ilk birkaç karakter + `***`) ve log retention politikası uygulanır.
+
 ---
 
 ## 10. Auth ve güvenlik modeli
