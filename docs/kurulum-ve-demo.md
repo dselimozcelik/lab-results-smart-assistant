@@ -270,6 +270,13 @@ rozetiyle ayrışır; yalnızca renge bağlı kalmamak bilinçli bir erişilebil
 
 ![Login ekranı](screenshots/01-login.png)
 
+Hatalı kullanıcı adı veya parolada arka uç 401 döner ve aynı mesajı verir (kullanıcı adının
+var olup olmadığını sızdırmamak için); arayüz bunu okunur bir uyarıya çevirir: **"Kullanıcı adı
+veya şifre hatalı."** Sunucuya hiç ulaşılamadığı durumda ise mesaj **"Giriş şu anda
+tamamlanamadı. Lütfen tekrar deneyin."** olur.
+
+![Hatalı giriş — yanlış parolada gösterilen uyarı](screenshots/01b-login-hata.png)
+
 ![Hasta rollup listesi — worst-status rozetleriyle](screenshots/02-hasta-listesi.png)
 
 ### 6.2 Hasta arama ve filtreleme
@@ -286,6 +293,11 @@ rozetiyle ayrışır; yalnızca renge bağlı kalmamak bilinçli bir erişilebil
 ![Arama önerileri — "p-" yazınca debounce sonrası gelen öneriler](screenshots/03-arama-onerileri.png)
 
 ![Gelişmiş filtreler paneli — test kodu, durum ve tarih aralığı](screenshots/04-gelismis-filtreler.png)
+
+Filtreler uygulandığında panel sağ üstte kaç filtrenin aktif olduğunu gösterir ve listenin
+altında her aktif filtre bir çip olarak görünür; `Tümünü temizle` ile tek tıkla sıfırlanır.
+
+![Aktif filtreler — uygulanan kriterler ve filtre çipleri](screenshots/04b-filtreler-aktif.png)
 
 ### 6.3 Hasta detayı: tüp, panel ve referans aralığı
 
