@@ -1,8 +1,8 @@
 # Teknik Tasarım ve Karar Savunması
 
-Bu belge, sistemin **ne yaptığını** değil, **neden bu şekilde tasarlandığını** ve hangi
-trade-off'ların bilinçli olarak kabul edildiğini açıklar. Her bölümde önce seçilen yaklaşım, sonra
-reddedilen alternatif, en sonda **production'da ne yapardım** yer alır.
+Bu belge sistemin ne yaptığını değil, neden bu şekilde tasarlandığını ve hangi trade-off'ların
+bilinçli olarak kabul edildiğini anlatıyor. Her bölümde önce seçtiğim yaklaşım, sonra reddettiğim
+alternatif, en sonda production'da ne yapardım var.
 
 - Hızlı bakış → [README](../README.md)
 - Kurulum ve görselli demo → [Kurulum ve Demo Kılavuzu](kurulum-ve-demo.md)
@@ -34,11 +34,11 @@ reddedilen alternatif, en sonda **production'da ne yapardım** yer alır.
 
 Öncelik sırasıyla:
 
-1. Case'in bütün zorunlu parçalarını **uçtan uca çalışan tek bir akışta** birleştirmek.
-2. Normal akış kadar **bozuk veri ve dış servis kesintilerini** de görünür ve test edilebilir kılmak.
-3. LLM'i sistemin **karar vericisi değil, kontrollü yorumlayıcısı** olarak konumlandırmak.
-4. Beş günlük bir case kapsamında **gereksiz production karmaşıklığından** kaçınmak.
-5. Her önemli kararı kod, test ve dokümanla **savunulabilir** hale getirmek.
+1. Case'in bütün zorunlu parçalarını uçtan uca çalışan tek bir akışta birleştirmek.
+2. Normal akış kadar bozuk veriyi ve dış servis kesintilerini de görünür, test edilebilir kılmak.
+3. LLM'i sistemin karar vericisi olarak değil, kontrollü bir yorumlayıcı olarak konumlandırmak.
+4. Beş günlük bir case'te gereksiz production karmaşıklığından kaçınmak.
+5. Her önemli kararı kod, test ve dokümanla savunulabilir hale getirmek.
 
 ---
 
@@ -91,13 +91,13 @@ JPA tarafında `Sample @OneToMany LabResult`, `LabResult @ManyToOne Sample`.
 
 ### Neden?
 
-Gerçek bir lab analizöründe bir **tüp** işlenir ve bir **panel** üretir: tek hasta, tek `sampleId`,
-tek ölçüm zamanı, birden çok test. Bunun sonuçları:
+Gerçek bir lab analizörü bir tüpü işler ve bir panel üretir: tek hasta, tek `sampleId`, tek ölçüm
+zamanı, birden çok test. Bunun sonuçları:
 
-- `sampleId` doğal bir **idempotency sınırı** olur.
-- Aynı numuneye ait testler birlikte görüntülenir; **AI tek değeri değil paneli** yorumlar.
-- Ölçüm zamanı ve cihaz bilgisi her testte **tekrar etmez**.
-- Tüpün metadata'sı güvenilmezse **bütün panel reddedilebilir**; tek test bozuksa yalnızca o test
+- `sampleId` doğal bir idempotency sınırı oluyor.
+- Aynı numuneye ait testler birlikte görünüyor, böylece AI tek bir değeri değil paneli yorumluyor.
+- Ölçüm zamanı ve cihaz bilgisi her testte tekrar etmiyor.
+- Tüpün metadata'sı güvenilmezse bütün panel reddedilebilir. Tek bir test bozuksa yalnızca o test
   `INVALID` olur.
 
 ### Reddedilen alternatif
@@ -105,9 +105,9 @@ tek ölçüm zamanı, birden çok test. Bunun sonuçları:
 "Her test = bağımsız satır + bağımsız AI isteği." Daha basit görünür ama panel bağlamını kaybettirir,
 aynı numunenin metadata'sını her satırda tekrarlar ve idempotency'yi zayıflatır.
 
-> **Not:** `Patient` ayrı bir tablo değildir; hasta listesi `sample`/`lab_result` üzerinde sorgu
-> zamanı **GROUP BY ile rollup**'tır. Bu kapsamda hasta için ayrı bir kimlik tablosu gereksiz olurdu;
-> production'da hasta master-data ayrı bir bounded context olurdu.
+> Not: `Patient` ayrı bir tablo değil. Hasta listesi, sorgu zamanında `sample`/`lab_result` üzerinde
+> bir GROUP BY rollup'ı. Bu kapsamda hasta için ayrı bir kimlik tablosu gereksiz olurdu; production'da
+> hasta master-data'sı ayrı bir bounded context olurdu.
 
 ---
 
@@ -118,23 +118,23 @@ Controller → Service → Repository → PostgreSQL
                   └─→ DeviceClient / OllamaClient (dış HTTP, WebClient)
 ```
 
-- **Controller:** yalnızca HTTP ve DTO; iş kuralı içermez.
-- **Service:** use-case akışı ve **transaction sınırı**.
-- **Repository:** Spring Data JPA ile veri erişimi.
-- **Domain/DTO ayrımı:** entity'ler **asla** REST response olarak dönmez.
+- Controller: yalnızca HTTP ve DTO, iş kuralı içermez.
+- Service: use-case akışı ve transaction sınırı.
+- Repository: Spring Data JPA ile veri erişimi.
+- Domain/DTO ayrımı: entity'ler hiçbir zaman REST response olarak dönmez.
 
 ### Neden entity değil DTO?
 
-Entity döndürmek üç sorun getirir: lazy-loading'in serialization sırasında patlaması, iç alanların
-sızması, ve DB şemasındaki bir değişikliğin API sözleşmesini sessizce bozması. Ayrıca pagination'da
-Spring'in `PageImpl` JSON'u sözleşme garantisi vermez (boot loglarında da uyarılır); bu yüzden stabil
-bir **`PageResponse`** DTO'su kullanılır.
+Entity döndürmenin üç sorunu var: lazy-loading serialization sırasında patlar, iç alanlar sızar ve DB
+şemasındaki bir değişiklik API sözleşmesini sessizce bozar. Ayrıca pagination'da Spring'in `PageImpl`
+JSON'u bir sözleşme garantisi vermez (boot loglarında bunu kendisi de uyarır). Bu yüzden stabil bir
+`PageResponse` DTO'su kullanıyorum.
 
 ### `open-in-view: false`
 
-Bilinçli olarak kapatıldı. Açık olsaydı (Spring varsayılanı) view katmanına kadar bir DB Session
-açık kalır ve **gizli N+1 / lazy-init** sorunlarını maskelerdi. Kapalı tutmak, ilişkilerin
-**servis katmanında bilinçli** (örn. `JOIN FETCH`) çözülmesini zorunlu kılar.
+Bilinçli olarak kapattım. Açık olsaydı (Spring varsayılanı) view katmanına kadar bir DB Session açık
+kalır ve gizli N+1 ile lazy-init sorunlarını maskelerdi. Kapalı tutmak, ilişkileri servis katmanında
+bilinçli olarak (örneğin `JOIN FETCH` ile) çözmeyi zorunlu kılıyor.
 
 ---
 
@@ -142,63 +142,63 @@ açık kalır ve **gizli N+1 / lazy-init** sorunlarını maskelerdi. Kapalı tut
 
 ### Seçilen yaklaşım
 
-Backend mock cihazı varsayılan olarak **`@Scheduled(fixedDelay = 30s)`** ile çağırır
-(`lab.polling.fixed-delay-ms`). Normal mock batch 1-2 tüp üretir; full Docker çalıştırmasında
-`POLLING_DELAY_MS` ile demo hızı değiştirilebilir.
+Backend mock cihazı varsayılan olarak `@Scheduled(fixedDelay = 30s)` ile çağırır
+(`lab.polling.fixed-delay-ms`). Normal mock batch 1-2 tüp üretir; full Docker çalıştırmasında demo
+hızı `POLLING_DELAY_MS` ile değiştirilebilir.
 
 ### Neden `fixedDelay`, `fixedRate` değil?
 
-`fixedDelay` bir cycle **bittikten sonra** beklemeye başlar. Cihaz veya DB yavaşsa iki ingestion
-cycle'ı **üst üste binmez**. `fixedRate` olsaydı uzun süren cycle'lar çakışıp aynı veriyi iki kez
-işleme riski doğururdu.
+`fixedDelay` bir cycle bittikten sonra beklemeye başlar. Cihaz veya DB yavaşsa iki ingestion cycle'ı
+üst üste binmez. `fixedRate` olsaydı uzun süren cycle'lar çakışır ve aynı veriyi iki kez işleme riski
+doğardı.
 
 ### Hata davranışı
 
-- Cihaz `503` döndürür veya timeout (`5s`) olursa **backend çökmez**.
-- Başarısız cycle **audit log'a** yazılır.
+- Cihaz `503` döndürür ya da timeout (`5s`) olursa backend çökmez.
+- Başarısız cycle audit log'a yazılır.
 - Scheduler bir sonraki cycle'da yeniden dener.
 
 ### Production
 
-Tek-instance için Spring scheduler yeterlidir. Multi-instance'ta aynı cycle'ın birden çok kez
-çalışmasını önlemek için **ShedLock** veya harici bir scheduler/queue gerekir (kapsam dışı).
+Tek instance için Spring scheduler yeterli. Multi-instance'ta aynı cycle'ın birden çok kez
+çalışmasını önlemek için ShedLock ya da harici bir scheduler/queue gerekir (kapsam dışı).
 
 ---
 
 ## 6. Validation stratejisi
 
-Validation iki seviyeye ayrıldı: **tüp** ve **test**.
+Validation'ı iki seviyeye ayırdım: tüp ve test.
 
 ### Tüp seviyesi (SampleValidator)
 
-`sampleId`, `patientId`, `measuredAt`, `deviceId` olmadan kayıt anlamsızdır. Ayrıca **gelecekteki**
-veya **180 günden eski** bir ölçüm zamanı bütün tüpü güvenilmez yapar → tüp saklanmaz, audit'e
-reddedilme sebebiyle yazılır. **Gerekçe: güvenilmez tüp zamanı, güvenilmez sonuç demektir.**
+`sampleId`, `patientId`, `measuredAt`, `deviceId` olmadan kayıt anlamsız. Ayrıca gelecekteki ya da
+180 günden eski bir ölçüm zamanı bütün tüpü güvenilmez yapar. Tüp saklanmaz, reddedilme sebebiyle
+birlikte audit'e yazılır. Mantık basit: güvenilmez tüp zamanı, güvenilmez sonuç demek.
 
 ### Test seviyesi (TestResultValidator)
 
-Tüp güvenilir olsa bile tek bir testin değeri/birimi/sınırı bozuk olabilir. Bu test **düşürülmez,
-`INVALID` saklanır.**
+Tüp güvenilir olsa bile tek bir testin değeri, birimi ya da sınırı bozuk olabilir. Bu test
+düşürülmez, `INVALID` olarak saklanır.
 
 ### Neden bozuk test silinmiyor?
 
-Çünkü iki durum doktor için **farklı bilgidir**:
+Çünkü bu iki durum doktor için farklı bilgi:
 
 - "Cihaz bu testi hiç göndermedi."
 - "Test geldi ama kullanılamaz durumdaydı."
 
-Silmek bu ayrımı yok eder. Saklamak **gözlemlenebilirlik** sağlar.
+Silmek bu ayrımı yok eder. Saklamak gözlemlenebilirlik sağlar.
 
 ### Production
 
-Bilinen birimler ve klinik kurallar koddaki küçük listeler yerine **versiyonlanmış bir
-katalog/config servisi** üzerinden yönetilmelidir.
+Bilinen birimler ve klinik kurallar, koddaki küçük listeler yerine versiyonlu bir katalog/config
+servisi üzerinden yönetilmeli.
 
 ---
 
 ## 7. Anomali sınıflandırması
 
-Sınıflandırma **LLM'den tamamen bağımsız, deterministic Java** ile yapılır:
+Sınıflandırma, LLM'den tamamen bağımsız deterministic Java ile yapılır:
 
 ```text
 NORMAL    min ≤ value ≤ max
@@ -210,54 +210,54 @@ INVALID   değer/birim/referans güvenilir değil
 
 Varsayılan `factor = 0.5`, `lab.anomaly.critical-factor` ile dışarıdan yönetilir (kodda sabit yok).
 
-> Bu **açıklanabilir bir demo heuristiğidir, klinik gerçek değildir.** Production'da her test için
-> klinisyen onaylı panik değerleri gerekir.
+> Bu açıklanabilir bir demo heuristiği, klinik gerçek değil. Production'da her test için klinisyen
+> onaylı panic value'lar gerekir.
 
 ### Neden anomaliyi LLM hesaplamıyor?
 
-- **Determinizm:** aynı girdi → her zaman aynı sonuç.
-- **Test edilebilirlik:** iş kuralı saf birim testiyle doğrulanabilir.
-- **Güvenlik:** model halüsinasyonu klinik durum etiketini **değiştiremez**.
+- Determinizm: aynı girdi her zaman aynı sonucu verir.
+- Test edilebilirlik: iş kuralı saf bir birim testiyle doğrulanabilir.
+- Güvenlik: model halüsinasyonu klinik durum etiketini değiştiremez.
 
 ---
 
 ## 8. Idempotency ve duplicate yönetimi
 
-`sample.sampleId` veritabanında **UNIQUE**. Tüp içinde `(sample_fk, test_code)` de UNIQUE.
-Ingestion sırasında (kod: `LabResultIngestionService`):
+`sample.sampleId` veritabanında UNIQUE. Tüp içinde `(sample_fk, test_code)` de UNIQUE. Ingestion
+sırasında (kod: `LabResultIngestionService`):
 
 1. Aynı batch içindeki tekrarlar bir `Set` ile yakalanır (`seenInBatch`).
-2. Daha önce saklanmış tüpler `existsBySampleId` ile **önceden** atlanır.
-3. DB UNIQUE constraint'i **son güvenlik katmanı** olarak kalır.
-4. Tüp içinde tekrar eden `testCode` → ilki tutulur, ikincisi reddedilir.
-5. Duplicate sayısı ve sebebi audit'e yazılır; kayıt **eklenmez**.
+2. Daha önce saklanmış tüpler `existsBySampleId` ile önceden atlanır.
+3. DB UNIQUE constraint'i son güvenlik katmanı olarak kalır.
+4. Tüp içinde tekrar eden bir `testCode` görülürse ilki tutulur, ikincisi reddedilir.
+5. Duplicate sayısı ve sebebi audit'e yazılır, kayıt eklenmez.
 
 ### Neden DB exception'ına güvenmek yerine ön-kontrol?
 
-PostgreSQL'de bir UNIQUE ihlali **mevcut transaction'ı abort eder**; aynı transaction içinde
-exception'ı yakalayıp devam etmek güvenilir değildir. Ön-kontrol bu yüzden birincil savunmadır;
-DB constraint ise yarış durumlarına karşı **emniyet kemeri**dir.
+PostgreSQL'de bir UNIQUE ihlali mevcut transaction'ı abort eder; aynı transaction içinde exception'ı
+yakalayıp devam etmek güvenilir değil. Bu yüzden ön-kontrol birincil savunma; DB constraint ise yarış
+durumlarına karşı emniyet kemeri.
 
 ### Production
 
-Single-instance scheduler'da DB seviyesinde gerçek yarış beklenmez. Multi-instance ingestion'da
-ayrı-transaction yaklaşımı, **upsert (`ON CONFLICT`)** veya bir **idempotency inbox** değerlendirilir.
+Tek instance'lı scheduler'da DB seviyesinde gerçek bir yarış beklenmez. Multi-instance ingestion'da
+ayrı-transaction yaklaşımı, upsert (`ON CONFLICT`) ya da bir idempotency inbox değerlendirilir.
 
 ---
 
 ## 9. Audit ve loglama
 
-İki ayrı log ihtiyacı bilinçli olarak ayrıldı:
+İki ayrı log ihtiyacını bilinçli olarak ayırdım:
 
-- **Uygulama logları (stdout):** runtime teşhisi.
-- **Kalıcı audit kayıtları (`polling_audit_log`):** her cycle için fetched / valid / invalid /
-  duplicate sayıları + detaylar.
+- Uygulama logları (stdout): runtime teşhisi.
+- Kalıcı audit kayıtları (`polling_audit_log`): her cycle için fetched / valid / invalid / duplicate
+  sayıları ve detayları.
 
-Audit kaydı **veriyle aynı transaction** bağlamında yazılır; böylece "başarılı göründü ama verisi
-commit olmadı" durumu oluşmaz. Cihaz erişim hataları ise ingestion transaction'ı başlamadan ayrıca
-audit edilir.
+Audit kaydı veriyle aynı transaction bağlamında yazılır; böylece "başarılı göründü ama verisi commit
+olmadı" durumu oluşmaz. Cihaz erişim hataları ise ingestion transaction'ı başlamadan, ayrıca audit
+edilir.
 
-> **Panel modelinde sayıların anlamı:** `fetched = tüp sayısı`, `valid/invalid = test sayısı`,
+> Panel modelinde sayıların anlamı: `fetched = tüp sayısı`, `valid/invalid = test sayısı`,
 > `duplicate = tüp sayısı`. (Kolon adları geriye dönük uyumluluk için değişmedi.)
 
 ---
@@ -266,63 +266,64 @@ audit edilir.
 
 ### Seçilen yaklaşım
 
-Flyway ile seed edilen **tek demo doktor**, **BCrypt** parola hash'i, **stateless + süreli JWT**
-(60 dk, `lab.jwt.expiry-minutes`), Spring Security filter chain, RFC 7807 **`ProblemDetail`** hata
-cevapları, frontend'de **memory-only token**.
+Flyway ile seed edilen tek bir demo doktor, BCrypt parola hash'i, stateless ve süreli JWT (60 dk,
+`lab.jwt.expiry-minutes`), Spring Security filter chain, RFC 7807 `ProblemDetail` hata cevapları ve
+frontend'de memory-only token.
 
 ### Terminoloji (mülakat hassasiyeti)
 
-- **BCrypt encryption değildir**; tek yönlü bir parola hash'idir ve salt'ı kendi içinde taşır.
-- **JWT imzalıdır ama şifreli değildir**; bu yüzden payload'a hassas veri konmaz.
-- Demo localhost'ta **HTTP** kullanır; production'da TLS zorunludur.
-- Docker profilindeki JWT secret demo kolaylığıdır; production'da **secret manager** gerekir.
+- BCrypt encryption değildir; tek yönlü bir parola hash'idir ve salt'ı kendi içinde taşır.
+- JWT imzalıdır ama şifreli değildir; o yüzden payload'a hassas veri konmaz.
+- Demo localhost'ta HTTP kullanır; production'da TLS zorunlu.
+- Docker profilindeki JWT secret bir demo kolaylığı; production'da secret manager gerekir.
 
 ### Neden public register yok?
 
-Hastane sisteminde doktor hesabı **self-service kayıtla açılmaz**, admin tarafından provision edilir.
-Case yalnızca login istediği için register eklemek hem güvenlik riski hem kapsam genişlemesi olurdu.
+Hastane sisteminde doktor hesabı self-service kayıtla açılmaz, admin tarafından provision edilir. Case
+yalnızca login istediği için register eklemek hem bir güvenlik riski hem de kapsam genişlemesi olurdu.
 
 ### Neden token memory'de, localStorage'da değil?
 
-Token'ı kalıcı storage'a yazmak yerine sayfa yaşam döngüsü boyunca memory'de tutuyorum. Sayfa
-yenilemede yeniden login gerekmesi bir UX maliyetidir; sağlık verisi demosunda **daha dar saldırı
-yüzeyini** (XSS ile token sızması riskini azaltmayı) tercih ettim. Production için **BFF** veya
-güvenli **HttpOnly cookie/session** değerlendirilir.
+Token'ı kalıcı storage'a yazmak yerine sayfanın yaşam döngüsü boyunca memory'de tutuyorum. Sayfa
+yenilemede tekrar login gerekmesi bir UX maliyeti; ama sağlık verisi demosunda daha dar saldırı
+yüzeyini (XSS ile token sızması riskini azaltmayı) tercih ettim. Production için BFF ya da güvenli bir
+HttpOnly cookie/session değerlendirilir.
 
 ---
 
 ## 11. LLM tasarımı ve güvenlik sınırları
 
-LLM, klinik karar motoru değil, doktora yönelik **kontrollü bir yorum katmanı**dır.
+LLM burada klinik bir karar motoru değil, doktora yönelik kontrollü bir yorum katmanı.
 
-### Backend'in belirlediği (model'e bırakılmayan) gerçekler
+### Backend'in belirlediği (modele bırakılmayan) gerçekler
 
 - Test değerleri ve referans aralıkları
 - Deterministic anomali durumları
-- **`flaggedTests`** — kodda `sample.getTests()` üzerinden, **backend durumlarından** üretilir
-- Zorunlu **disclaimer** — sabit bir backend constant'tır
+- `flaggedTests`: kodda `sample.getTests()` üzerinden, backend durumlarından üretilir
+- Zorunlu disclaimer: sabit bir backend constant'ı
 
-### Model'den alınan alanlar
+### Modelden alınan alanlar
 
 - Panelin Türkçe özeti
-- Genel ve **reçetesiz** takip önerileri
+- Genel, reçetesiz takip önerileri
 
 ### Kodla uygulanan koruma sınırları
 
-1. Backend bütün paneli **deterministic metne** dönüştürür (`AnomalySummaryBuilder`).
-2. Cihazdan gelen hasta/numune kimlikleri, test adı ve birim gibi **tüm metin alanları** prompt'a
+1. Backend bütün paneli deterministic bir metne dönüştürür (`AnomalySummaryBuilder`).
+2. Cihazdan gelen hasta/numune kimlikleri, test adı ve birim gibi bütün metin alanları, prompt'a
    eklenmeden önce yapısal karakterlerden temizlenir.
-3. Prompt, modele durumları **kesin kabul et, yeniden hesaplama, veri uydurma** der.
+3. Prompt modele şunu söyler: durumları kesin kabul et, yeniden hesaplama, veri uydurma.
 4. Ollama `temperature = 0`, `stream = false`, `format = json` ile çağrılır.
-5. Model JSON'u **parse edilir**; boş/bozuk/aşırı büyük çıktı **reddedilir** ve cache'e yazılmaz.
-6. Modelin döndürdüğü `flaggedTests` **kullanılmaz**; backend'in listesi kullanılır.
-7. Disclaimer modelden beklenmez, **backend Türkçe olarak ekler**.
-8. Timeout / bağlantı hatası → kontrollü **`503 AI analysis unavailable`**; sistemin kalanı çalışır.
-9. Sonuç `(sample, model, promptVersion)` ile **cache**'lenir; ikinci çağrıda LLM çağrılmaz.
+5. Model JSON'u parse edilir; boş, bozuk ya da aşırı büyük çıktı reddedilir ve cache'e yazılmaz.
+6. Modelin döndürdüğü `flaggedTests` kullanılmaz; backend'in listesi kullanılır.
+7. Disclaimer modelden beklenmez, backend Türkçe olarak ekler.
+8. Timeout ya da bağlantı hatasında kontrollü bir `503 AI analysis unavailable` döner; sistemin
+   geri kalanı çalışmaya devam eder.
+9. Sonuç `(sample, model, promptVersion)` ile cache'lenir; ikinci çağrıda LLM hiç çağrılmaz.
 
-Modelin `summary` ve takip önerileri hâlâ **güvenilmeyen serbest metindir**. Kod; biçim, boyut,
-deterministik durumlar, flagged test listesi ve disclaimer'ı zorlar fakat klinik doğruluğu veya
-tanı dilini eksiksiz biçimde otomatik kanıtlayamaz. Bu nedenle çıktı ön değerlendirme olarak
+Modelin `summary` ve takip önerileri hâlâ güvenilmeyen serbest metin. Kod; biçimi, boyutu,
+deterministik durumları, flagged test listesini ve disclaimer'ı zorluyor ama klinik doğruluğu veya
+tanı dilini eksiksiz biçimde otomatik kanıtlayamıyor. Bu yüzden çıktı bir ön değerlendirme olarak
 sunulur ve doktor incelemesi zorunludur.
 
 AI akışında cache/panel okuması ve analiz kaydı kısa repository transaction'larıdır. Panel
@@ -331,58 +332,58 @@ tutulmaz.
 
 ### Prompt nasıl şekillendi?
 
-Prompt v1'den v4'e, **gerçek hatalı çıktılarla** evrildi (örn. küçük modelin negatif lökositi
-sorgulamaması, test adını "beygir hücre sayımı" diye çevirmesi). Bu deney günlüğü ve `qwen2.5:7b`
-vs `gemma2:9b` karşılaştırması ayrı bir belgededir → [AI Prompt Deney Günlüğü](ai-prompt-experiments.md).
+Prompt v1'den v4'e, gerçek hatalı çıktılara bakarak evrildi (örneğin küçük modelin negatif lökositi
+sorgulamaması, test adını "beygir hücre sayımı" diye çevirmesi). Bu deney günlüğü ve `qwen2.5:7b` ile
+`gemma2:9b` karşılaştırması ayrı bir belgede → [AI Prompt Deney Günlüğü](ai-prompt-experiments.md).
 
 ### Neden raw WebClient (Spring AI değil)?
 
-Tek provider ve tek endpoint için Spring AI gibi büyük bir abstraction **gereksiz karmaşıklık**
-olurdu; raw `WebClient` ile timeout ve hata davranışı üzerinde tam kontrol var. Production'da
-gözlemlenebilirlik, prompt evaluation, PHI politikaları ve asenkron queue eklenirdi.
+Tek provider ve tek endpoint için Spring AI gibi büyük bir abstraction gereksiz bir karmaşıklık
+olurdu. Raw `WebClient` ile timeout ve hata davranışı üzerinde tam kontrol var. Production'da
+gözlemlenebilirlik, prompt evaluation, PHI politikaları ve asenkron bir queue eklenirdi.
 
 ---
 
 ## 12. Frontend UX kararları
 
-- **Arama önerileri 250 ms debounce** ile gelir; büyük liste her tuşta sorgulanmaz.
-- Öneri seçmek arama değerini doldurur; sorgu yalnızca **`Hastaları getir`** ile uygulanır
-  (öneri ≠ uygulanan filtre).
-- Hasta numarası ve test kodu sorguları **case-insensitive**'dir.
-- Kritik satırlar **yalnız renkle değil, metin rozetiyle de** ayrılır (erişilebilirlik).
-- Hasta detayında **anormal testler önce** sıralanır (client-side).
-- **Loading / error / empty / success** durumlarının hepsi görünürdür; uzun işlemler **toast** ile
-  bildirilir; hatalar **retry** edilebilir.
-- Liste **10 sn'de bir** yenilenir (TanStack Query); demo için WebSocket yerine sade bir yaklaşım.
-- **Sunucu durumu TanStack Query ile** yönetilir (cache, `keepPreviousData`, retry); elle state
-  tutmaktan daha sağlam ve daha az hata yüzeyli.
-- Session bittiğinde **query cache temizlenir**; önceki doktorun verisi yeni session'a taşınmaz.
+- Arama önerileri 250 ms debounce ile gelir; büyük liste her tuşta sorgulanmaz.
+- Öneri seçmek arama değerini doldurur ama sorguyu yalnızca `Hastaları getir` uygular; öneri seçmek,
+  uygulanmış bir filtre demek değil.
+- Hasta numarası ve test kodu sorguları case-insensitive.
+- Kritik satırlar sadece renkle değil, metin rozetiyle de ayrılır (erişilebilirlik için).
+- Hasta detayında anormal testler client-side olarak öne sıralanır.
+- Loading, error, empty ve success durumlarının hepsi görünür; uzun işlemler toast ile bildirilir,
+  hatalar retry edilebilir.
+- Liste 10 saniyede bir yenilenir (TanStack Query); demo için WebSocket yerine sade bir yaklaşım.
+- Sunucu durumunu TanStack Query yönetir (cache, `keepPreviousData`, retry); elle state tutmaktan
+  daha sağlam ve daha az hata yüzeyi açıyor.
+- Session bittiğinde query cache temizlenir; önceki doktorun verisi yeni session'a taşınmaz.
 
 ---
 
 ## 13. Docker ve çalıştırma modeli
 
-İki compose dosyası bilinçli olarak ayrıldı:
+İki compose dosyasını bilinçli olarak ayırdım:
 
-- **`docker-compose.yml`** → geliştirme: yalnızca PostgreSQL; uygulamalar host'ta hızlı reload ile.
-- **`docker-compose.full.yml`** → teslim: backend, mock, frontend, PostgreSQL tek komutla.
+- `docker-compose.yml` (geliştirme): yalnızca PostgreSQL; uygulamalar host'ta hızlı reload ile çalışır.
+- `docker-compose.full.yml` (teslim): backend, mock, frontend ve PostgreSQL tek komutla.
 
-**Ollama container'a alınmaz**: büyük model lifecycle'ı host'ta kalır. Container'lar Ollama'ya
+Ollama container'a alınmaz, büyük model lifecycle'ı host'ta kalır. Container'lar Ollama'ya
 `host.docker.internal` üzerinden erişir (Linux'ta full compose `host-gateway` mapping'ini ekler).
-Frontend nginx, `/api` isteklerini backend'e proxy ederek Docker ortamında **same-origin** trafik
-sağlar (CORS yükü olmadan). nginx'in AI isteği için okuma/yazma timeout'u **70 saniye**, backend'in
-Ollama timeout'u **60 saniyedir**; böylece proxy önce kesmek yerine backend'in kontrollü `503`
-cevabını kullanıcıya ulaştırabilir.
+Frontend nginx'i `/api` isteklerini backend'e proxy ederek Docker ortamında same-origin trafik
+sağlar, böylece CORS yükü olmaz. nginx'in AI isteği için okuma/yazma timeout'u 70 saniye, backend'in
+Ollama timeout'u ise 60 saniye. Bu sayede proxy isteği erken kesmek yerine backend'in kontrollü `503`
+cevabını kullanıcıya ulaştırabiliyor.
 
-Frontend imajı **multi-stage** build edilir (Vite build → nginx ile statik serve); API base URL
-build argümanıyla **konfigüre edilebilir**.
+Frontend imajı multi-stage build edilir (Vite build, ardından nginx ile statik serve); API base URL
+bir build argümanıyla konfigüre edilebilir.
 
 ---
 
 ## 14. Test stratejisi ve failure-mode matrisi
 
-Test sayısını tek başına kalite kanıtı saymıyorum; önemli olan testlerin **kritik failure
-mode'ları** kapsamasıdır. Güncel: **backend 46 · mock 10 · frontend 14**, tümü yeşil.
+Test sayısını tek başına bir kalite kanıtı saymıyorum; önemli olan testlerin kritik failure
+mode'larını kapsaması. Güncel durum: backend 46, mock 10, frontend 14, tümü yeşil.
 
 ```mermaid
 flowchart TB
@@ -393,11 +394,11 @@ flowchart TB
     U --> C
 ```
 
-- **Integration:** PostgreSQL **Testcontainers** ile gerçek motor olarak başlar — Flyway, UNIQUE
-  constraint'ler ve PostgreSQL'e özgü sorgular **H2 ile taklit edilmez**.
-- **Dış servisler:** mock cihaz ve Ollama **MockWebServer** ile izole edilir; test paketi gerçek
-  Ollama/mock **gerektirmez** (CI'da model indirmeye gerek yok).
-- **Frontend:** Testing Library ile davranış testi (implementasyon detayı değil).
+- Integration: PostgreSQL, Testcontainers ile gerçek motor olarak başlar. Flyway, UNIQUE
+  constraint'ler ve PostgreSQL'e özgü sorgular H2 ile taklit edilmiyor.
+- Dış servisler: mock cihaz ve Ollama MockWebServer ile izole edilir. Test paketi çalışmak için
+  gerçek Ollama'ya veya mock'a ihtiyaç duymaz (CI'da model indirmek gerekmez).
+- Frontend: Testing Library ile davranış testi yazıyorum, implementasyon detayını değil.
 
 ### Failure-mode matrisi
 
@@ -405,11 +406,11 @@ flowchart TB
 |---|---|---|
 | Bozuk değer (missing-field) | Güvenilir tüpte test `INVALID` saklanır | `LabResultIngestionServiceTest`, `BackendApiIntegrationTest` |
 | Geçersiz birim | Test `INVALID`, sebep audit'te | `LabResultIngestionServiceTest` |
-| Stale/future tüp | **Tüm tüp** reddedilir | `LabResultIngestionServiceTest` |
+| Stale/future tüp | Tüm tüp reddedilir | `LabResultIngestionServiceTest` |
 | Duplicate tüp/test | Eklenmez, duplicate sayılır | `LabResultIngestionServiceTest` |
 | Cihaz `503`/kesinti | Backend çökmez, audit edilir, tekrar dener | `LabResultPollerTest` |
 | Cihaz timeout | İstek yapılandırılan sürede kesilir | `DeviceClientTest` |
-| Ollama timeout/kesinti | Kontrollü `503`, analiz **cache'e yazılmaz** | `AiAnalysisServiceTest` |
+| Ollama timeout/kesinti | Kontrollü `503`, analiz cache'e yazılmaz | `AiAnalysisServiceTest` |
 | Bozuk/boş LLM JSON | Çıktı reddedilir | `AiAnalysisServiceTest` |
 | LLM sahte flaggedTest üretir | Model iddiası yok sayılır, backend listesi kullanılır | `AiAnalysisServiceTest` |
 | Prompt injection (dış cihaz metin alanları) | Sahte prompt satırı enjekte edilemez | `AnomalySummaryBuilderTest` |
@@ -425,12 +426,12 @@ flowchart TB
 
 ### Kalan riskler
 
-- Component testleri tam tarayıcı E2E'sini kapsamaz; production'da Playwright/Cypress eklenir.
-- LLM testi **şema/güvenlik sınırlarını** doğrular; klinik doğruluk için alan uzmanı + versiyonlu
-  evaluation dataset gerekir.
-- Modelin serbest metninde tanı/reçete dilini eksiksiz yakalayan bir semantik filtre yoktur;
-  backend'in zorladığı alanlar ve doktor incelemesi asıl güvenlik sınırıdır.
-- Multi-instance ingestion yarışı single-node kapsamında test edilmedi.
+- Component testleri tam bir tarayıcı E2E'sini kapsamaz; production'da Playwright ya da Cypress eklenir.
+- LLM testi şema ve güvenlik sınırlarını doğrular; klinik doğruluk için bir alan uzmanı ve versiyonlu
+  bir evaluation dataset gerekir.
+- Modelin serbest metninde tanı/reçete dilini eksiksiz yakalayan bir semantik filtre yok; asıl
+  güvenlik sınırı backend'in zorladığı alanlar ve doktor incelemesi.
+- Multi-instance ingestion yarışı tek node kapsamında test edilmedi.
 
 ---
 
@@ -454,7 +455,7 @@ flowchart TB
 
 ## 16. Bağımsız değerlendirme sonrası sertleştirmeler
 
-Bağımsız teknik jüri incelemesinde bulunan yüksek etkili noktalar şu şekilde düzeltildi:
+Bağımsız bir teknik incelemede çıkan yüksek etkili noktaları şöyle düzelttim:
 
 | Bulgu | Yapılan düzeltme | Neden |
 |---|---|---|

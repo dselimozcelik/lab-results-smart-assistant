@@ -1,13 +1,12 @@
 # Lab Results Smart Assistant
 
-Bir laboratuvar cihazını periyodik olarak dinleyen; gelen test sonuçlarını doğrulayan, saklayan ve
-anomalilerini sınıflandıran; doktora yerel bir LLM ile **ön değerlendirme** sunan full-stack bir
-sistem. Doktorlar React arayüzünden giriş yapıp hastalarını, tüplerini ve test panellerini inceler.
+Bir lab cihazını periyodik olarak dinleyen full-stack bir sistem. Gelen test sonuçlarını doğrular,
+saklar, anomalilerini işaretler ve doktora yerel bir LLM üzerinden ön değerlendirme sunar. Doktor
+React arayüzünden giriş yapar; hastalarını, tüplerini ve test panellerini görür.
 
-Bu projeyi "çalışan bir demo" olarak değil, **hata yollarının da görünür ve test edilebilir olduğu**
-küçük ama sağlam bir sistem olarak tasarladım: bozuk veri, duplicate mesaj, cihaz kesintisi, LLM
-timeout'u ve hatalı model çıktısı gibi durumlarda sistemin ne yaptığı dokümante ve otomatik testlerle
-kanıtlanmıştır.
+Çoğu demo happy path'i gösterir. Ben hata yollarını da görünür ve test edilebilir tutmaya çalıştım:
+bozuk veri, duplicate mesaj, cihaz kesintisi, LLM timeout'u, hatalı model çıktısı. Bunların her
+birinde sistemin ne yaptığı hem dokümanlı hem de otomatik testlerle sabit.
 
 > Bu bir teknik değerlendirme projesidir. **Gerçek hasta verisi yoktur; tüm veriler mock/demodur.**
 > AI çıktısı bir tanı değil, doktora yönelik kontrollü bir ön değerlendirmedir.
@@ -75,8 +74,7 @@ Kullanıcı adı: doctor
 
 ## Mimari
 
-Sistem dört bağımsız parçadan oluşur. Her biri tek bir sorumluluğa sahiptir ve ayrı ayrı
-ölçeklenebilir/çalıştırılabilir.
+Sistem dört parçadan oluşur, her biri tek bir işten sorumlu. Ayrı ayrı çalıştırılabilirler.
 
 ```mermaid
 flowchart LR
@@ -92,8 +90,8 @@ flowchart LR
     F -->|"JWT korumalı REST"| B
 ```
 
-> Kesik çizgi (Ollama) bilinçli bir bağımsızlıktır: LLM erişilemese bile sistemin geri kalanı
-> çalışmaya devam eder; AI paneli kontrollü bir hata gösterir.
+> Ollama'ya giden kesik çizgi bilinçli. LLM'e ulaşılamasa bile sistemin geri kalanı çalışır;
+> AI paneli sadece kontrollü bir hata gösterir.
 
 Uçtan uca veri akışının ayrıntısı ve her adımın hangi kararı kanıtladığı:
 → [Teknik Tasarım — Uçtan Uca Akış](docs/teknik-tasarim.md#uçtan-uca-veri-akışı).
@@ -102,9 +100,9 @@ Uçtan uca veri akışının ayrıntısı ve her adımın hangi kararı kanıtla
 
 ## Domain Modeli: Hasta → Tüp → Test
 
-En kritik tasarım kararı budur. İlk bakışta "her test = bir kayıt" daha basittir; ama gerçek bir lab
-analizöründe **bir tüp (numune) işlenir ve bir panel** üretir: tek hasta, tek `sampleId`, tek ölçüm
-zamanı, birden çok test. Modeli buna göre üç seviyeye ayırdım:
+Projedeki en önemli karar buydu. İlk bakışta "her test bir kayıt" daha basit görünüyor. Ama gerçek
+bir lab analizörü bir tüpü (sample) işler ve bir panel üretir: tek hasta, tek `sampleId`, tek ölçüm
+zamanı, birden çok test. Modeli de buna göre üç seviyeye böldüm:
 
 ```text
 Patient            (API tarafında hasta bazında rollup)
@@ -114,26 +112,26 @@ Patient            (API tarafında hasta bazında rollup)
 
 Bu modelin getirileri:
 
-- `sampleId` doğal bir **idempotency anahtarı** olur.
-- Aynı tüpteki testler birlikte görüntülenir; **AI tek değeri değil, panel bağlamını** yorumlar.
-- Tüpün metadata'sı güvenilmezse **tüm panel reddedilebilir**; tek test bozuksa yalnızca o test
-  `INVALID` olur — ikisi farklı durumdur ve ayrı ele alınır.
+- `sampleId` doğal bir idempotency anahtarı oluyor.
+- Aynı tüpteki testler birlikte görünüyor, böylece AI tek bir değeri değil panelin tamamını yorumluyor.
+- Tüpün metadata'sı güvenilmezse tüm panel reddedilebilir. Tek bir test bozuksa yalnızca o test
+  `INVALID` olur. Bunlar farklı durumlar ve ayrı ele alınıyor.
 
 Gerekçenin tamamı ve reddedilen alternatif:
 → [Teknik Tasarım — Domain Modeli](docs/teknik-tasarim.md#domain-modeli-hasta--tüp--test).
 
 ---
 
-## Öne Çıkan Mühendislik Kararları
+## Mühendislik kararları
 
-Aşağıda her kararın **bir cümlelik özü** var; gerekçesi, alternatifi ve production karşılığı teknik
-tasarım belgesinde.
+Her kararın bir cümlelik özü aşağıda. Gerekçesi, alternatifi ve production karşılığı teknik tasarım
+belgesinde.
 
 | Karar | Neden (özet) |
 |---|---|
 | **`@Scheduled(fixedDelay)`** ile polling | Yavaş bir cycle bitmeden yenisi başlamasın; üst üste binen ingestion olmasın. |
 | Bozuk test **silinmez, `INVALID` saklanır** | "Test hiç gelmedi" ile "geldi ama kullanılamaz" doktor için farklı bilgidir. |
-| Anomali **LLM'e değil, deterministic Java'ya** | Aynı girdi → aynı sonuç; iş kuralı test edilebilir; model halüsinasyonu durumu değiştiremez. |
+| Anomali **LLM'e değil, deterministic Java'ya** | Aynı girdi aynı sonucu verir, iş kuralı test edilebilir kalır ve model halüsinasyonu durumu değiştiremez. |
 | LLM çıktısına **kısmen** güvenilir | `flaggedTests` ve disclaimer backend'den gelir; model yalnızca verilen gerçekleri yorumlar. |
 | Token **memory'de**, localStorage'da değil | Sağlık verisi demosunda daha dar saldırı yüzeyi tercih edildi. |
 | `open-in-view: false` | Lazy-loading kaynaklı gizli N+1 ve açık-Session anti-pattern'i kapatıldı. |
@@ -145,7 +143,7 @@ Detay → [Teknik Tasarım](docs/teknik-tasarim.md).
 
 ## İş Kuralları
 
-Anomali durumu beş değerden biridir ve **konfigüre edilebilir** bir eşikle hesaplanır:
+Anomali durumu beş değerden biri ve konfigüre edilebilir bir eşikle hesaplanıyor:
 
 | Durum | Kural |
 |---|---|
@@ -160,16 +158,16 @@ CRITICAL eşiği:
   value < min − factor·(max − min)   veya   value > max + factor·(max − min)
 ```
 
-> Bu, **açıklanabilir bir demo heuristiğidir, klinik gerçek değildir.** Production'da test bazlı,
-> klinisyen onaylı panik değerleri (versiyonlanmış bir config servisinden) kullanılırdı. Eşik
-> `application-*.yml` içindeki `lab.anomaly.critical-factor` ile dışarıdan yönetilir; kodda sabit yoktur.
+> Bu açıklanabilir bir demo heuristiği, klinik gerçek değil. Production'da test bazlı, klinisyen
+> onaylı panic value'lar (versiyonlu bir config servisinden) kullanılırdı. Eşik `application-*.yml`
+> içindeki `lab.anomaly.critical-factor` ile dışarıdan yönetiliyor, kodda sabit bir sayı yok.
 
 ---
 
 ## Bilinçli Olarak Yapılmayanlar
 
-Bu, single-node bir değerlendirme demosudur; production-ready iddiası taşımaz. Aşağıdakiler
-**bilerek** kapsam dışında bırakıldı — her birinin nedeni ve production karşılığı vardır:
+Bu tek node'luk bir değerlendirme demosu, production-ready olma iddiası yok. Aşağıdakileri bilerek
+kapsam dışı bıraktım. Her birinin nedeni ve production karşılığı var:
 
 | Konu | Bu kapsamda neden yok? | Production yaklaşımı |
 |---|---|---|
@@ -218,10 +216,10 @@ cd mock-lab-service && ./mvnw test                             # 10 test
 cd frontend && npm ci && npm test && npm run lint && npm run build   # 14 test
 ```
 
-- Backend integration testleri **gerçek PostgreSQL'i Testcontainers ile** başlatır — Flyway,
-  unique constraint'ler ve PostgreSQL'e özgü sorgular H2 gibi başka bir motorda taklit edilmez.
-- Mock cihaz ve Ollama testlerde **MockWebServer ile izole edilir**; test paketi gerçek Ollama veya
-  çalışan mock servis **gerektirmez**.
+- Backend integration testleri gerçek PostgreSQL'i Testcontainers ile başlatır. Flyway,
+  unique constraint'ler ve PostgreSQL'e özgü sorgular H2 gibi başka bir motorda taklit edilmiyor.
+- Mock cihaz ve Ollama testlerde MockWebServer ile izole edilir. Test paketi çalışmak için gerçek
+  Ollama'ya veya ayakta bir mock servise ihtiyaç duymaz.
 - AI isteğinde nginx timeout'u backend'in Ollama timeout'undan daha uzundur; model erişilemezse
   proxy'nin ham `504` cevabı yerine backend'in kontrollü hata cevabı UI'a ulaşır.
 - Frontend testleri kullanıcı davranışını (login, kritik badge, arama, AI durumları) Testing Library
